@@ -1,0 +1,162 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+
+name: human
+rootLink: body
+links:
+  -
+    name: body
+    translation: [1.5, 0.0, 1.2]
+    jointType: free
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Box
+          size: [ 0.2, 0.4, 0.8]
+        appearance: &BodyAppearance
+          material:
+            diffuseColor: [ 1.0, 1.0, 0.0 ]
+  -
+    name: right-arm
+    parent: body
+    translation: [0.0, 0.4, 0.3]
+    jointType: revolute
+    jointAxis: [1, 0, 0]
+    jointRange: [-90, 90]
+    jointId: 0
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: left-arm
+    parent: body
+    translation: [0.0, -0.4, 0.3]
+    jointType: revolute
+    jointAxis: [-1, 0, 0]
+    jointRange: [-90, 90]
+    jointId: 1
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: right-thigh
+    parent: body
+    translation: [0.0, 0.1, -0.6]
+    rotation: [1.0, 0.0, 0.0, 90.0]
+    jointType: revolute
+    jointAxis: [0, 1, 0]
+    jointRange: [0, 150]
+    jointId: 2
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: left-thigh
+    parent: body
+    translation: [0.0, -0.1, -0.6]
+    rotation: [1.0, 0.0, 0.0, 90.0]
+    jointType: revolute
+    jointAxis: [0, 1, 0]
+    jointRange: [0, 150]
+    jointId: 3
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: right-knee
+    parent: right-thigh
+    translation: [0.0, -0.4, 0.0]
+    jointType: revolute
+    jointAxis: [0, 1, 0]
+    jointRange: [0, 150]
+    jointId: 4
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: left-knee
+    parent: left-thigh
+    translation: [0.0, -0.4, 0.0]
+    jointType: revolute
+    jointAxis: [0, 1, 0]
+    jointRange: [0, 150]
+    jointId: 5
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Cylinder
+          radius: 0.1
+          height: 0.4
+        appearance: *BodyAppearance
+  -
+    name: head
+    parent: body
+    translation: [0.0, 0.0, 0.5]
+    jointType: fixed
+    mass: 1.0
+    inertia: [
+      0.072533, 0,       0,
+      0,       0.008533, 0,
+      0,       0,       0.072533 ]
+    elements:
+      Shape:
+        geometry:
+          type: Sphere
+          radius: 0.1
+        appearance: *BodyAppearance

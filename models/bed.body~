@@ -1,0 +1,24 @@
+format: ChoreonoidBody	
+formatVersion: 1.0	
+
+name: bed
+rootLink: body
+links:
+  -
+    name: body
+    translation: [2.0, 0, 0.25]
+    jointType: free
+    mass: 50.0
+    inertia: [
+      2.083, 0,       0,
+      0,       17.708, 0,
+      0,       0,       2.083 ]
+    elements:
+        Shape:
+            geometry:
+              type: Box
+              size: [ 0.5, 2.0, 0.5]
+            appearance: &BodyAppearance
+              material:
+                diffuseColor: [ 1.0, 1.0, 0.0 ]
+      
