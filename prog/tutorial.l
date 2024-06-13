@@ -56,7 +56,7 @@
   )
 
 
-(arm-solve-ik :larm-trans-pos #f(400 -50 -50) :larm-rpy (float-vector (deg2rad -20) 0 0) :rarm-trans-pos #f(400 50 -50) :rarm-rpy (float-vector (deg2rad 20) 0 0))
+(arm-solve-ik :larm-trans-pos #f(400 -100 0) :larm-rpy (float-vector (deg2rad -20) 0 0) :rarm-trans-pos #f(400 100 0) :rarm-rpy (float-vector (deg2rad 20) 0 0))
 (send *ri* :angle-vector (send *robot* :angle-vector))
 (send *ri* :wait-interpolation)
 
@@ -90,3 +90,34 @@
 ;;       :av-list (list (send *robot* :angle-vector) (send *robot* :angle-vector) (send *robot* :angle-vector))
 ;;       :time-list (list 2000 2000 2000)
 ;;        )
+
+;; インピーダンス制御の設定
+(send *ri* :remove-force-sensor-offset-rmfo-arms) ;;手先力センサのオフセットを除去。
+(send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
+                                                 :K-p 500.0 :D-p 1000.0 :M-p 5) ;;インピーダンス制御の設定。K(バネ)D(ダンパ)M(慣性)、　r(回転)、p(並進)
+(send *ri* :start-impedance :arms) ;;インピーダンス制御開始
+
+
+(send *ri* :set-ref-forces
+      (list
+       (float-vector 0 0 0) ;;rleg
+       (float-vector 0 0 0) ;;lleg
+       (float-vector 0 -50  0) ;;rarm (x, y, z) 単位はニュートン
+       (float-vector 0 50   0) ;;larm
+       )
+       3000)
+(unix:sleep 5) ;;指定した時間(秒)処理を止める
+
+(send *ri* :set-ref-forces
+      (list
+       (float-vector 0 0 0)
+       (float-vector 0 0 0)
+       (float-vector 0 -50 -80) ;;rarm
+       (float-vector 0 50  -80) ;;larm
+       )
+       5000)
+(unix:sleep 5)
+
+(send *robot* :arms :move-end-pos #f(0 0 200))
+(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+(send *ri* :wait-interpolation)
