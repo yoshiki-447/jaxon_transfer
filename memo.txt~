@@ -1,0 +1,8 @@
+send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :methods
+send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :slots
+
+send *ri* :start-auto-balancer
+send *ri* :set-auto-stabilizer-param :default-zmp-offsets '(#f(-0.02 0.02) #f(-0.02 -0.02)) ;;rleg lleg
+send *ri* :stop-auto-balancer
+
+;;

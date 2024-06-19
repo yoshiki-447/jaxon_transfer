@@ -7,13 +7,13 @@ rootLink: body
 links:
   -
     name: body
-    translation: [1.0, 0.0, 0.9]
+    translation: [1.15, 0.0, 1.0]
     jointType: free
-    mass: 1.0
+    mass: 23.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.9967, 0,       0,
+      0,       0.7667, 0,
+      0,       0,       0.3833 ]
     elements:
       Shape:
         geometry:
@@ -26,15 +26,15 @@ links:
     name: right-arm
     parent: body
     translation: [0.0, 0.4, 0.2]
-    jointType: revolute
-    jointAxis: [1, 0, 0]
-    jointRange: [-90, 90]
-    jointId: 0
-    mass: 1.0
+    jointType: fixed
+    ; jointAxis: [1, 0, 0]
+    ; jointRange: [-90, 90]
+    ; jointId: 0
+    mass: 4.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0633, 0,       0,
+      0,       0.02, 0,
+      0,       0,       0.0633 ]
     elements:
       Shape:
         geometry:
@@ -46,15 +46,15 @@ links:
     name: left-arm
     parent: body
     translation: [0.0, -0.4, 0.2]
-    jointType: revolute
-    jointAxis: [-1, 0, 0]
-    jointRange: [-90, 90]
-    jointId: 1
-    mass: 1.0
+    jointType: fixed
+    ; jointAxis: [-1, 0, 0]
+    ; jointRange: [-90, 90]
+    ; jointId: 1
+    mass: 4.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0633, 0,       0,
+      0,       0.02, 0,
+      0,       0,       0.0633 ]
     elements:
       Shape:
         geometry:
@@ -67,15 +67,15 @@ links:
     parent: body
     translation: [-0.1, 0.1, -0.3]
     rotation: [0.0, 0.0, -1.0, 90.0]
-    jointType: revolute
-    jointAxis: [0, 1, 0]
-    jointRange: [0, 150]
-    jointId: 2
-    mass: 1.0
+    jointType: fixed
+    ; jointAxis: [0, 1, 0]
+    ; jointRange: [0, 150]
+    ; jointId: 2
+    mass: 3.5
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0554,  0,       0,
+      0,       0.0175, 0,
+      0,       0,       0.0554 ]
     elements:
       Shape:
         geometry:
@@ -88,15 +88,15 @@ links:
     parent: body
     translation: [-0.1, -0.1, -0.3]
     rotation: [0.0, 0.0, -1.0, 90.0]
-    jointType: revolute
-    jointAxis: [0, 1, 0]
-    jointRange: [0, 150]
-    jointId: 3
-    mass: 1.0
+    jointType: fixed
+    ; jointAxis: [0, 1, 0]
+    ; jointRange: [0, 150]
+    ; jointId: 3
+    mass: 3.5
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0554, 0,       0,
+      0,       0.0175, 0,
+      0,       0,       0.0554 ]
     elements:
       Shape:
         geometry:
@@ -109,15 +109,15 @@ links:
     parent: right-thigh
     translation: [0.0, -0.2, -0.2]
     rotation: [1.0, 0.0, 0.0, 90.0]
-    jointType: revolute
-    jointAxis: [0, 1, 0]
-    jointRange: [0, 150]
-    jointId: 4
-    mass: 1.0
+    ; jointType: revolute
+    ; jointAxis: [0, 1, 0]
+    ; jointRange: [0, 150]
+    ; jointId: 4
+    mass: 4.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0633 ,0,       0,
+      0,       0.02, 0,
+      0,       0,       0.0633 ]
     elements:
       Shape:
         geometry:
@@ -130,15 +130,15 @@ links:
     parent: left-thigh
     translation: [0.0, -0.2, -0.2]
     rotation: [1.0, 0.0, 0.0, 90.0]
-    jointType: revolute
-    jointAxis: [0, 1, 0]
-    jointRange: [0, 150]
-    jointId: 5
-    mass: 1.0
+    jointType: fixed
+    ; jointAxis: [0, 1, 0]
+    ; jointRange: [0, 150]
+    ; jointId: 5
+    mass: 4.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.0633, 0,       0,
+      0,       0.02, 0,
+      0,       0,       0.0633 ]
     elements:
       Shape:
         geometry:
@@ -151,11 +151,11 @@ links:
     parent: body
     translation: [0.0, 0.0, 0.5]
     jointType: fixed
-    mass: 1.0
+    mass: 4.0
     inertia: [
-      0.072533, 0,       0,
-      0,       0.008533, 0,
-      0,       0,       0.072533 ]
+      0.016, 0,       0,
+      0,       0.016, 0,
+      0,       0,       0.016 ]
     elements:
       Shape:
         geometry:

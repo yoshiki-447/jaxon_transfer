@@ -27,6 +27,10 @@
 			   (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
 	  :translation-axis (list t t)
 	  :rotation-axis (list t t)
+	  ;; :target-centroid-pos (midpoint 0.5
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos)
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos))
+	  ;; :cog-translation-axis :z
 	  )
     )
   )
@@ -51,73 +55,112 @@
 			   (send *robot* :link-list (send *robot* :lleg :end-coords :parent)))
 	  :translation-axis (list t t)
 	  :rotation-axis (list t t)
+	  ;; :target-centroid-pos (midpoint 0.5
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos)
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos))
+	  ;; :cog-translation-axis :z
 	  )
     )
   )
 
+(defun init ()
+    (send *robot* :angle-vector #f(0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 40.0 -20.0 -5.0 -80.0 0.0 0.0 -20.0 0.0 40.0 20.0 5.0 -80.0 0.0 0.0 -20.0 0.0 90.0 0.0 0.0 0.0 0.0 0.0 90.0 0.0 0.0 0.0 0.0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+  )
 
-(arm-solve-ik :larm-trans-pos #f(400 -100 0) :larm-rpy (float-vector (deg2rad -20) 0 0) :rarm-trans-pos #f(400 100 0) :rarm-rpy (float-vector (deg2rad 20) 0 0))
-(send *ri* :angle-vector (send *robot* :angle-vector))
-(send *ri* :wait-interpolation)
+(defun zmp-start ()
+  (send *ri* :start-auto-balancer)
+  (send *ri* :set-auto-stabilizer-param :default-zmp-offsets '(#f(0.05 0.02) #f(0.05 -0.02)))
+  )
 
-;foot-solve-ik :rleg-trans-pos #f(0 0 0) :lleg-trans-pos #f(-50 50 0) :rleg-rpy (float-vector (deg2rad 30) 0 0) :lleg-rpy (float-vector (deg2rad 30) 0 0)
+(defun zmp-stop ()
+  (send *ri* :stop-auto-balancer)
+  )
+
+(defun all ()
+    ;; (send *robot* :torso :waist-p :joint-angle 30)
+    ;; (send *ri* :angle-vector (send *robot* :angle-vector))
+    ;; (send *ri* :wait-interpolation)
+    
+  (arm-solve-ik :larm-trans-pos #f(200 0 50) :larm-rpy (float-vector (deg2rad -20) 0 0) :rarm-trans-pos #f(200 0 50) :rarm-rpy (float-vector (deg2rad 20) 0 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+
+  (arm-solve-ik :larm-trans-pos #f(400 0 0) :rarm-trans-pos #f(400 0 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+  
+  (arm-solve-ik :larm-trans-pos #f(0 -100 0) :rarm-trans-pos #f(0 100 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+  
+  (send *robot* :larm :wrist-p :joint-angle -60)
+  (send *robot* :rarm :wrist-p :joint-angle -60)
+  (send *robot* :rarm :wrist-r :joint-angle 50)
+  (send *robot* :larm :wrist-r :joint-angle -50)
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+
+  ;foot-solve-ik :rleg-trans-pos #f(100 0 0) :lleg-trans-pos #f(-100 100 0) :rleg-rpy (float-vector 0 0 0) :lleg-rpy (float-vector (deg2rad 30) 0 0)
 ;send *robot* :torso :waist-y :joint-angle 30
 
-;; (dotimes (i 6)
-;;   (send *ri* :set-foot-steps
-;; 	(list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
-;; 	      (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -50 50 0)) :rotate (deg2rad 15) :z) :name :lleg)
-;; 	      (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -50 50 0)) :rotate (deg2rad 15) :z) :name :rleg)
-;; 	      )
-;; 	)
-;;   )
+  ;; (dotimes (i 6)
+  ;;   (send *ri* :set-foot-steps
+  ;; 	(list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
+  ;; 	      (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -50 50 0)) :rotate (deg2rad 15) :z) :name :lleg)
+  ;; 	      (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -50 50 0)) :rotate (deg2rad 15) :z) :name :rleg)
+  ;; 	      )
+  ;; 	)
+  ;;   )
 
-;; (send *ri* :set-foot-steps-with-param
-;;       :foot-step-list
-;;       (list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
-;; 	    (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :lleg)
-;; 	    (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :rleg)
-;; 	    )
-;;       :step-time-list (list 2000 2000 2000)
-;;       )
+  ;; (send *ri* :set-foot-steps-with-param
+  ;;       :foot-step-list
+  ;;       (list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
+  ;; 	    (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :lleg)
+  ;; 	    (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :rleg)
+  ;; 	    )
+  ;;       :step-time-list (list 2000 2000 2000)
+  ;;       )
 
-;; (send *ri* :set-foot-steps-with-base-height
-;;       :fs
-;;       (list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
-;; 	    (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :lleg)
-;; 	    (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :rleg)
-;; 	    )
-;;       :av-list (list (send *robot* :angle-vector) (send *robot* :angle-vector) (send *robot* :angle-vector))
-;;       :time-list (list 2000 2000 2000)
-;;        )
+  ;; (send *ri* :set-foot-steps-with-base-height
+  ;;       :fs
+  ;;       (list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
+  ;; 	    (make-coords :coords (send (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :lleg)
+  ;; 	    (make-coords :coords (send (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate (float-vector -100 100 0)) :rotate (deg2rad 30) :z) :name :rleg)
+  ;; 	    )
+  ;;       :av-list (list (send *robot* :angle-vector) (send *robot* :angle-vector) (send *robot* :angle-vector))
+  ;;       :time-list (list 2000 2000 2000)
+  ;;        )
 
-;; インピーダンス制御の設定
-(send *ri* :remove-force-sensor-offset-rmfo-arms) ;;手先力センサのオフセットを除去。
-(send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
-                                                 :K-p 500.0 :D-p 1000.0 :M-p 5) ;;インピーダンス制御の設定。K(バネ)D(ダンパ)M(慣性)、　r(回転)、p(並進)
-(send *ri* :start-impedance :arms) ;;インピーダンス制御開始
+  ;; インピーダンス制御の設定
+  (send *ri* :remove-force-sensor-offset-rmfo-arms) ;;手先力センサのオフセットを除去。
+  (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
+	:K-p 500.0 :D-p 1000.0 :M-p 5) ;;インピーダンス制御の設定。K(バネ)D(ダンパ)M(慣性)、　r(回転)、p(並進)
+  (send *ri* :start-impedance :arms) ;;インピーダンス制御開始
 
 
-(send *ri* :set-ref-forces
-      (list
-       (float-vector 0 0 0) ;;rleg
-       (float-vector 0 0 0) ;;lleg
-       (float-vector 0 -50  0) ;;rarm (x, y, z) 単位はニュートン
-       (float-vector 0 50   0) ;;larm
-       )
-       3000)
-(unix:sleep 5) ;;指定した時間(秒)処理を止める
+  ;; (send *ri* :set-ref-forces
+  ;;       (list
+  ;;        (float-vector 0 0 0) ;;rleg
+  ;;        (float-vector 0 0 0) ;;lleg
+  ;;        (float-vector 0 -100  0) ;;rarm (x, y, z) 単位はニュートン
+  ;;        (float-vector 0 100   0) ;;larm
+  ;;        )
+  ;;        3000)
+  ;; (unix:sleep 5) ;;指定した時間(秒)処理を止める
+  
+  ;; (send *ri* :set-ref-forces
+  ;;       (list
+  ;;        (float-vector 0 0 0)
+  ;;        (float-vector 0 0 0)
+  ;;        (float-vector 0 -100 -400) ;;rarm
+  ;;        (float-vector 0 100  -400) ;;larm
+  ;;        )
+  ;;        5000)
+  ;; (unix:sleep 5)
 
-(send *ri* :set-ref-forces
-      (list
-       (float-vector 0 0 0)
-       (float-vector 0 0 0)
-       (float-vector 0 -50 -80) ;;rarm
-       (float-vector 0 50  -80) ;;larm
-       )
-       5000)
-(unix:sleep 5)
-
-(send *robot* :arms :move-end-pos #f(0 0 200))
-(send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-(send *ri* :wait-interpolation)
+  ;; (send *robot* :arms :move-end-pos #f(0 0 100))
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;; (send *ri* :wait-interpolation)
+)

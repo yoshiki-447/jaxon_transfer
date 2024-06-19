@@ -1,0 +1,13 @@
+send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :methods
+send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :slots
+
+send *ri* :start-auto-balancer
+send *ri* :set-auto-stabilizer-param :default-zmp-offsets '(#f(-0.02 0.02) #f(-0.02 -0.02)) ;;rleg lleg
+send *ri* :stop-auto-balancer
+
+progn (send *jaxon_red* :reset-pose) (send *jaxon_red* :move-centroid-on-foot :both (list :lleg :rleg))
+progn (send *jaxon_red* :lleg :move-end-pos #f(100 0 0) :world) (send *jaxon_red* :rleg :move-end-pos #f(-100 0 0) :world) (send *jaxon_red* :move-centroid-on-foot :both (list :lleg :rleg))
+
+
+
+;;左足のかかと、右足のつま先を軸にIK解いて回転
