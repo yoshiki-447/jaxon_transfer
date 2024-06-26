@@ -229,7 +229,7 @@
 	      (make-coords :coords (send
 				    (send
 				     (send *robot* :rleg :end-coords :copy-worldcoords)
-				     :translate (float-vector 0 -150 0))
+				     :translate (float-vector 0 0 0))
 				    :rotate (deg2rad 90) :z)
 			   :name :rleg)
 	      )
