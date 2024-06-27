@@ -115,7 +115,7 @@
   (send *ri* :angle-vector (send *robot* :angle-vector))
   (send *ri* :wait-interpolation)
   
-  (arm-solve-ik :larm-trans-pos #f(0 -100 0) :rarm-trans-pos #f(0 100 0))
+  (arm-solve-ik :larm-trans-pos #f(0 -100 100) :rarm-trans-pos #f(0 100 100))
   (send *ri* :angle-vector (send *robot* :angle-vector))
   (send *ri* :wait-interpolation)
   )
@@ -129,6 +129,13 @@
   (send *ri* :wait-interpolation)
   )
 
+(defun lie-hand ()
+  (send *robot* :rarm :wrist-r :joint-angle 90)
+  (send *robot* :larm :wrist-y :joint-angle 0)
+  ;;(send *robot* :larm :wrist-r :joint-angle 90)
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+  )
 ;; (defun foot-posture ()
 ;;   (foot-solve-ik :lleg-trans-pos #f(-300 100 0) :lleg-rpy (float-vector (deg2rad 30) 0 0))
 ;;   (send *ri* :angle-vector (send *robot* :angle-vector))
@@ -240,6 +247,7 @@
   (send *robot* :arms :move-end-pos #f(0 0 -100))
   (send *ri* :angle-vector (send *robot* :angle-vector))
   (send *ri* :wait-interpolation)
+  (send *ri* :stop-impedance :arms)
 )
 
 (defun all ()
