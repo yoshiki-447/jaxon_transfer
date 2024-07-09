@@ -11,3 +11,15 @@ progn (send *jaxon_red* :lleg :move-end-pos #f(100 0 0) :world) (send *jaxon_red
 
 
 ;;左足のかかと、右足のつま先を軸にIK解いて回転
+
+arai@arai-desktop ~/ros/coral_ws/src/jsk_recognition/jsk_perception/sample (master) (ROBOT=)
+ $ roslaunch realsense2_camera rs_d435_and_t265.launch rviz:=false USE_T265:=false color_width:=640 color_height:=480
+
+(base) arai@arai-desktop ~/ros/coral_ws/src/realsense-ros/realsense2_camera/launch (l515_and_t265) (ROBOT=)
+ $ rqt_image_view
+
+(py3.8) arai@arai-desktop ~/ros/coral_ws/src/coral_usb_ros/launch (skelton) (ROBOT=)
+ $ roslaunch edgetpu_human_pose_estimator.launch INPUT_IMAGE:=/rs_l515/color/image_raw
+
+arai@arai-desktop ~/ros/coral_ws/src/jsk_recognition/jsk_perception/launch (skelton-with-depth) (ROBOT=)
+ $ roslaunch skeleton_with_depth.launch 

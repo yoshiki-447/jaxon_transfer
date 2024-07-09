@@ -111,11 +111,20 @@
   ;; (send *ri* :angle-vector (send *robot* :angle-vector))
   ;; (send *ri* :wait-interpolation)
 
-  (arm-solve-ik :larm-trans-pos #f(400 0 0) :rarm-trans-pos #f(400 0 0))
+  (arm-solve-ik :larm-trans-pos #f(400 -200 150) :rarm-trans-pos #f(200 -200 150))
   (send *ri* :angle-vector (send *robot* :angle-vector))
   (send *ri* :wait-interpolation)
   
-  (arm-solve-ik :larm-trans-pos #f(0 -100 100) :rarm-trans-pos #f(0 100 100))
+  (arm-solve-ik :larm-trans-pos #f(100 0 0) :rarm-trans-pos #f(0 100 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+
+  (arm-solve-ik :larm-trans-pos #f(100 -50 0) :rarm-trans-pos #f(200 100 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+
+  (send *robot* :larm :wrist-r :joint-angle 0)
+  (send *robot* :rarm :wrist-r :joint-angle 30)
   (send *ri* :angle-vector (send *robot* :angle-vector))
   (send *ri* :wait-interpolation)
   )
@@ -148,7 +157,7 @@
 	(list (make-coords :coords (send *robot* :lleg :end-coords :copy-worldcoords) :name :lleg)
 	      (make-coords :coords (send
 				    (send *robot* :rleg :end-coords :copy-worldcoords)
-				    :translate (float-vector 0 -100 0))
+				    :translate (float-vector 0 -150 0))
 			   :name :rleg)
 	      (make-coords :coords (send
 				    (send
@@ -158,7 +167,7 @@
 			   :name :lleg)
 	       (make-coords :coords (send
 				    (send *robot* :rleg :end-coords :copy-worldcoords)
-				    :translate (float-vector 200 0 0))
+				    :translate (float-vector 250 0 0))
 			   :name :rleg)
 	      )
 	)
@@ -225,9 +234,9 @@
          5000)
   (unix:sleep 5)
 
-  (send *robot* :arms :move-end-pos #f(0 0 100))
-  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-  (send *ri* :wait-interpolation)
+  ;; (send *robot* :arms :move-end-pos #f(0 0 100))
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;; (send *ri* :wait-interpolation)
 )
 
 (defun rotate ()
@@ -244,9 +253,9 @@
 )
 
 (defun down ()
-  (send *robot* :arms :move-end-pos #f(0 0 -100))
-  (send *ri* :angle-vector (send *robot* :angle-vector))
-  (send *ri* :wait-interpolation)
+  ;; (send *robot* :arms :move-end-pos #f(0 0 -100))
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector))
+  ;; (send *ri* :wait-interpolation)
   (send *ri* :stop-impedance :arms)
 )
 
