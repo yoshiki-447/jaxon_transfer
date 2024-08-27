@@ -35,6 +35,33 @@
     )
   )
 
+(defun arm-solve-ik-locate
+    (&key(rarm-trans-pos (send *robot* :rarm :end-coords :worldpos))
+	 (larm-trans-pos (send *robot* :larm :end-coords :worldpos))
+	 (rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
+	 (larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0))))
+  (let* ((rarm-end-coords (send *robot* :rarm :end-coords :copy-worldcoords))
+	 (larm-end-coords (send *robot* :larm :end-coords :copy-worldcoords))
+	 (rarm-translation-coords (send rarm-end-coords :locate rarm-trans-pos :world) :copy-worldcoords)
+	 (larm-translation-coords (send larm-end-coords :locate larm-trans-pos :world) :copy-worldcoords)
+	 (rarm-target (make-coords :pos (send rarm-translation-coords :pos)
+				   :rpy rarm-rpy))
+	 (larm-target (make-coords :pos (send larm-translation-coords :pos)
+				   :rpy larm-rpy)))
+    (send *robot* :inverse-kinematics (list rarm-target larm-target)
+	  :move-target (list (send *robot* :rarm :end-coords)
+			     (send *robot* :larm :end-coords))
+	  :link-list (list (send *robot* :link-list (send *robot* :rarm :end-coords :parent))
+			   (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
+	  :translation-axis (list t t)
+	  :rotation-axis (list t t)
+	  ;; :target-centroid-pos (midpoint 0.5
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos)
+	  ;; 				 (send *robot* :rleg :end-coords :worldpos))
+	  ;; :cog-translation-axis :z
+	  )
+    )
+  )
 (defun foot-solve-ik
     (&key(rleg-trans-pos #f(0 0 0))
 	 (lleg-trans-pos #f(0 0 0))
