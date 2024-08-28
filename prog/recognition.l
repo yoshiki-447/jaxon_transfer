@@ -70,6 +70,7 @@
 	    (setq coords coords2)
 	    ;;(print coords)
 	    (setq pos (send coords :pos))
+	    (print (send coords1 :pos))
 	    (print pos)
 	    pos
 	    )
@@ -144,6 +145,7 @@
     (while (ros::ok)
       (ros::spin-once)
       ;; ここにsubscribeした結果を元にした動作メソッドとかを入れたりする
+      ;;抱える
       (when (and r-shoulder-pos l-elbow-pos)
 	(format t "norm: ~A~%" (norm r-shoulder-pos))
 	(format t "norm: ~A~%" (norm l-elbow-pos))

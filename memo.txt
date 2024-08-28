@@ -23,3 +23,34 @@ arai@arai-desktop ~/ros/coral_ws/src/jsk_recognition/jsk_perception/sample (mast
 
 arai@arai-desktop ~/ros/coral_ws/src/jsk_recognition/jsk_perception/launch (skelton-with-depth) (ROBOT=)
  $ roslaunch skeleton_with_depth.launch 
+
+rostopic echo skeleton_with_depth/output/skeletons
+
+arai@arai-desktop ~/ros/coral_ws/src/jsk_recognition/jsk_perception/launch (skelton-with-depth) (ROBOT=)
+ $ rosrun image_view image_view image:=/edgetpu_human_pose_estimator/output/image
+
+roslaunch realsense2_camera rs_d435_and_t265.launch rviz:=false USE_T265:=false color_width:=640 color_height:=480 
+roslaunch coral_usb edgetpu_human_pose_estimator.launch INPUT_IMAGE:=/rs_l515/color/image_raw 
+roslaunch jsk_perception skeleton_with_depth.launch
+rosrun image_view image_view image:=/edgetpu_human_pose_estimator/output/image
+jsk_recognition branch skelton-with-depth
+coral_usb_ros branch skelton
+realsense2_camera branch l515_and_t265
+
+load "recognition.l"
+send *people-pose* :ros-init
+send *people-pose* :ros-motion
+
+;;realsensexyz
+x左y下z前
+;;JAXONのIK
+larm-locate #f(611 175 43) -> #f(811 125 43)
+
+ssh leus@jaxonred ;;password leus
+roscore
+
+ssh leus@jaxonredvision ;;password leus 
+./start-arai.sh
+
+rossetjaxon_red ;;別端末 別端末で開くときは毎回する
+rqt_image_view ;;/edgetpu_human_pose_estimator/output/image
