@@ -50,7 +50,7 @@
     target-coords)
   )
 
-(defun recognition (msg string1 string2)
+(defun recognition_end (msg string1 string2)
    (when (> (length (send msg :skeletons)) 0) ;; 一人以上認識したら処理をする
       (setq pose-msg (car (send msg :skeletons)))
       (setq limb-msg (send pose-msg :bone_names))
@@ -63,15 +63,15 @@
 	  (incf count)
 	  )
 	(when success
-	  (format t "~A index: ~A~%" string2 shoulder-index)
+	  ;;(format t "~A index: ~A~%" string2 shoulder-index)
 	  (let* ((coords1 (make-coords :pos (ros::tf-point->pos (send (elt (send pose-msg :bones) shoulder-index) :end_point))
 				       :rpy (float-vector 0 0 0)))
 		 (coords2 (world-to-target coords1)))
 	    (setq coords coords2)
 	    ;;(print coords)
 	    (setq pos (send coords :pos))
-	    (print (send coords1 :pos))
-	    (print pos)
+	    ;;(print (send coords1 :pos))
+	    ;;(print pos)
 	    pos
 	    )
 	  )
@@ -79,8 +79,45 @@
       )
    )
 
-(setq *r-shoulder-list* '())
-(setq *l-elbow-list* '())
+(defun recognition_start (msg string1 string2)
+   (when (> (length (send msg :skeletons)) 0) ;; 一人以上認識したら処理をする
+      (setq pose-msg (car (send msg :skeletons)))
+      (setq limb-msg (send pose-msg :bone_names))
+      (let ((count 0) (success nil))
+        (dolist (limb-name limb-msg)
+	  (when (string-equal limb-name string1)
+	    (setq shoulder-index count)
+	    (setq success t)
+	    )
+	  (incf count)
+	  )
+	(when success
+	  ;;(format t "~A index: ~A~%" string2 shoulder-index)
+	  (let* ((coords1 (make-coords :pos (ros::tf-point->pos (send (elt (send pose-msg :bones) shoulder-index) :start_point))
+				       :rpy (float-vector 0 0 0)))
+		 (coords2 (world-to-target coords1)))
+	    (setq coords coords2)
+	    ;;(print coords)
+	    (setq pos (send coords :pos))
+	    ;;(print (send coords1 :pos))
+	    ;;(print pos)
+	    pos
+	    )
+	  )
+	)
+      )
+   )
+
+(defun hold_point (shoulder-pos elbow-pos hip-pos &key(m-shoulder 2) (m-elbow 2) (m-hip 1))
+  (setq m (+ m-shoulder m-elbow m-hip))
+  (setq m_shoulder (scale m-shoulder shoulder-pos))
+  (setq m_elbow (scale m-elbow elbow-pos))
+  (setq m_hip (scale m-hip hip-pos))
+  (setq hold_point (scale (/ 1.0 m) (v+ m_shoulder m_elbow m_hip)))
+  hold_point
+  )
+;; (setq *r-shoulder-list* '())
+;; (setq *l-elbow-list* '())
 
 (defclass Subscriber
   :super propertied-object
@@ -105,11 +142,19 @@
 
   
   (:cb-function (msg)
+    (setq l-shoulder-pos nil)
     (setq r-shoulder-pos nil)
     (setq l-elbow-pos nil)
-    (setq r-shoulder-pos (recognition msg "left shoulder->right shoulder" "right-shoulder"))
-    (setq l-elbow-pos (recognition msg "right shoulder->left elbow" "left-elbow"))		
-		
+    (setq r-elbow-pos nil)
+    (setq l-hip-pos nil)
+    (setq r-hip-pos nil)
+    (setq l-shoulder-pos (recognition_start msg "left shoulder->right shoulder" "left-shoulder"))
+    (setq r-shoulder-pos (recognition_end msg "left shoulder->right shoulder" "right-shoulder"))
+    (setq l-elbow-pos (recognition_end msg "left shoulder->left elbow" "left-elbow"))		
+    (setq r-elbow-pos (recognition_end msg "right shoulder->right elbow" "right-elbow"))
+    (setq l-hip-pos (recognition_start msg "left hip->right hip" "left-hip"))
+    (setq r-hip-pos (recognition_end msg "left hip->right hip" "right-hip"))
+    
     ;; (push (recognition msg "left shoulder->right shoulder" "right-shoulder") *r-shoulder-list*)
     ;; (push (recognition msg "right shoulder->left elbow" "left-elbow") *l-elbow-list*)
     ;; (print *r-shoulder-list*)
@@ -146,15 +191,31 @@
       (ros::spin-once)
       ;; ここにsubscribeした結果を元にした動作メソッドとかを入れたりする
       ;;抱える
-      (when (and r-shoulder-pos l-elbow-pos)
-	(format t "norm: ~A~%" (norm r-shoulder-pos))
-	(format t "norm: ~A~%" (norm l-elbow-pos))
-	(let* ((limit 600)
-	       (dist-check-r-shoulder (< (norm r-shoulder-pos) limit))
-	       (dist-check-l-elbow (< (norm l-elbow-pos) limit)))
-	  (cond ((and dist-check-r-shoulder dist-check-l-elbow)
-		 (arm-solve-ik-locate :larm-trans-pos r-shoulder-pos)
-		 (arm-solve-ik-locate :rarm-trans-pos l-elbow-pos)
+      (when (and r-shoulder-pos r-elbow-pos r-hip-pos)
+	(setq r_hold_point (hold_point r-shoulder-pos r-elbow-pos r-hip-pos))
+	(format t "r_hold_point: ~A~%" r_hold_point)
+	;;(format t "norm: ~A~%" (norm (v- r-shoulder-pos r-elbow-pos)))
+	;; (format t "norm: ~A~%" (norm r-shoulder-pos))
+	;; (format t "norm: ~A~%" (norm l-elbow-pos))
+	(let* ((limit 1000)
+	       (dist-check-r-hold-point (< (norm r_hold_point) limit)))
+	  (cond (dist-check-r-hold-point
+		 (arm-solve-ik-locate :larm-trans-pos r_hold_point)
+		 (print "success")
+		 )
+		(t
+		 (format t "ik failed~%")
+		 )
+		)
+	  )
+	)
+      (when (and l-shoulder-pos l-elbow-pos l-hip-pos)
+	(setq l_hold_point (hold_point l-shoulder-pos l-elbow-pos l-hip-pos))
+	(format t "l_hold_point: ~A~%" l_hold_point)
+	(let* ((limit 1000)
+	       (dist-check-l-hold-point (< (norm l_hold_point) limit)))
+	  (cond (dist-check-l-hold-point
+		 (arm-solve-ik-locate :rarm-trans-pos l_hold_point)
 		 (print "success")
 		 )
 		(t
