@@ -4,6 +4,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import cv2
+#import pyrealsense2 as rs
 
 def calculate_kmin_kmax(depths):
     #depths = [depth_frame.get_distance(x, y) for (x, y) in joint_coords]
@@ -34,12 +35,12 @@ def recognition(msg, str1, str2, skeletons, bone_names, bones, coords):
             if limb_name == str1:
                 index = count
                 success = 1
-                count+1
                 if success:
                     bones = bones(human)[index]
                     #print("{}: {}".format(str2,coords(bones)))
                     return coords(bones)     #limb_nameの座標を取得
-
+            count+=1
+            
 r_shoulder_pos = None
 r_elbow_pos = None
 r_hip_pos = None
@@ -83,6 +84,7 @@ def get_depth_value(shoulder_pos, elbow_pos, hip_pos):
         # shoulder_x, shoulder_y = int(shoulder_pos.x), int(shoulder_pos.y)
         # elbow_x, elbow_y = int(elbow_pos.x), int(elbow_pos.y)
         # hip_x, hip_y = int(hip_pos.x), int(hip_pos.y)
+        print("shoulder: {}".format(shoulder_pos.x))
         shoulder_depth_value = depth_image[int(shoulder_pos.y), int(shoulder_pos.x)]
         elbow_depth_value = depth_image[int(elbow_pos.y), int(elbow_pos.x)]
         hip_depth_value = depth_image[int(hip_pos.y), int(hip_pos.x)]
@@ -97,19 +99,24 @@ def main():
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if r_shoulder_pos and r_elbow_pos and r_hip_pos:
-            right_joint_coords = [r_shoulder_pos, r_elbow_pos, r_hip_pos]
+            right_joint_coords =np.array([[r_shoulder_pos.x,r_shoulder_pos.y], [r_elbow_pos.x,r_elbow_pos.y],[r_hip_pos.x,r_hip_pos.y]])
+            print(right_joint_coords)
             depths = get_depth_value(r_shoulder_pos, r_elbow_pos, r_hip_pos)
             #left_joint_coords = [l_shoulder_pos, l_elbow_pos, l_hip_pos]
-            #print(right_joint_coords)
+            print(right_joint_coords)
+            print("depths: {}".format(depths))
+            
             r_kmin, r_kmax = calculate_kmin_kmax(depths)
             print(f"r_kmin: {r_kmin}, r_kmax: {r_kmax}")
             
             # ROIの定義
-            r_roi_points = np.array(right_joint_coords, np.int32).reshape((-1, 1, 2))
+            #r_roi_points = np.array(right_joint_coords, np.int32).reshape((-1, 1, 2))
+            #r_roi_points = np.array(right_joint_coords).reshape((-1, 2))
+            #print("roi:{}".format(r_roi_points))
             
             # ROI内のピクセルを取り出すためのマスクを作成
             mask = np.zeros_like(depth_image, dtype=np.uint8)
-            cv2.fillPoly(mask, [r_roi_points], 255)
+            cv2.fillPoly(mask, right_joint_coords , 255)
             
             # ROI内のピクセルを抽出
             roi_depth = cv2.bitwise_and(depth_image, depth_image, mask=mask)
