@@ -130,15 +130,19 @@
 
 (defclass Subscriber
   :super propertied-object
-  :slots (limb-msg pose-msg shoulder-index r-shoulder-coords r-shoulder-pos)
+  :slots (limb-msg pose-msg shoulder-index l-shoulder-pos r-shoulder-pos l-elbow-pos r-elbow-pos l-hip-pos r-hip-pos)
   )
 
 (defmethod Subscriber
   (:init () (setq limb-msg nil
 		  pose-msg nil
 		  shoulder-index nil
-		  r-shoulder-coords nil
-		  r-shoulder-pos nil)
+		  l-shoulder-pos nil
+		  r-shoulder-pos nil
+		  l-elbow-pos nil
+		  r-elbow-pos nil
+		  l-hip-pos nil
+		  r-hip-pos nil)
 	 self)
   
   (:ros-init ()
@@ -195,7 +199,7 @@
     
     )
 
-  (:ros-motion ()
+  (:ros-motion-bring ()
     (while (ros::ok)
       (ros::spin-once)
       ;; ここにsubscribeした結果を元にした動作メソッドとかを入れたりする
@@ -262,7 +266,27 @@
   ;;     (ros::sleep)
   ;;     )
   ;;   )
-  )
+  
+
+(:ros-motion-lying ()
+    (while (ros::ok)
+      (ros::spin-once)
+      ;; ここにsubscribeした結果を元にした動作メソッドとかを入れたりする
+      ;;抱える
+      (when (and r-shoulder-pos r-elbow-pos r-hip-pos)
+	;;(format t "r-shoulder: ~A~%r-elbow: ~A~%r-hip: ~A~%" r-shoulder-pos r-elbow-pos r-hip-pos)
+	(setq r_hold_point (hold_point r-shoulder-pos r-elbow-pos r-hip-pos))
+	(format t "r_hold_point: ~A~%" r_hold_point)
+	)
+      (when (and l-shoulder-pos l-elbow-pos l-hip-pos)
+	;;(format t "l-shoulder: ~A~%l-elbow: ~A~%l-hip: ~A~%" l-shoulder-pos l-elbow-pos l-hip-pos)
+	(setq l_hold_point (hold_point l-shoulder-pos l-elbow-pos l-hip-pos))
+	(format t "l_hold_point: ~A~%" l_hold_point)
+	)
+      (ros::sleep)
+      )
+    )
+)
 
 (setq *people-pose* (instance Subscriber :init))
 (send *people-pose* :ros-init)

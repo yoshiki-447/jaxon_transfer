@@ -34,7 +34,7 @@ roslaunch coral_usb edgetpu_human_pose_estimator.launch INPUT_IMAGE:=/rs_l515/co
 roslaunch jsk_perception skeleton_with_depth.launch
 rosrun image_view image_view image:=/edgetpu_human_pose_estimator/output/image
 jsk_recognition branch skelton-with-depth
-coral_usb_ros branch skelton
+coral_usb_ros branch skelton->iory/human-pose-estimater
 realsense2_camera branch l515_and_t265
 
 load "recognition.l"
@@ -54,3 +54,10 @@ ssh leus@jaxonredvision ;;password leus
 
 rossetjaxon_red ;;別端末 別端末で開くときは毎回する
 rqt_image_view ;;/edgetpu_human_pose_estimator/output/image
+
+anaconda pip install pyrealsense2==2.54.2.5684
+
+vision
+rosbag play ~~
+roslaunch coral_usb
+roslaunch jsk_perception
