@@ -1,0 +1,27 @@
+手元
+cd ros/jaxon_transfer ./start-arai.sh
+
+ssh leus@jaxonred pass leus
+./start-arai.sh
+
+(hrpsysタブでCtrl+C)
+servoタブを停止
+12V電源つける
+rvizとjaxonが連携しているか確認
+servoタブを起動
+緊急停止ボタンを外す
+servoタブのコマンドでcalib hole
+hall_statusが水色か確認
+(hrpsys起動)
+scriptタブでipython -i jaxon_red_with_mslhand_setup.py
+hcf.servoOnWithResetPose()
+
+hcf.ast_svc.startAutoBalancer()
+hcf.removeForceSensorOffsetRMFO()
+jaxonを地面につける
+hcf.ast_svc.startStabilizer()
+
+
+緊急停止ボタンを押す
+scriptタブでhcf.servoOff()
+12V電源落とす

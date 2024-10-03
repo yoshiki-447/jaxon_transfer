@@ -67,29 +67,32 @@
   (send *ri* :set-foot-steps
 	(list (make-coords :coords (send *robot* :rleg :end-coords :copy-worldcoords) :name :rleg)
 	      (make-coords :coords (send
-				    (send
+				   ;; (send
 				     (send *robot* :lleg :end-coords :copy-worldcoords)
-				     :translate (float-vector -200 100 0))
-				    :rotate (deg2rad 60) :z)
+				     :translate (float-vector 0 150 0))
+				   ;; :rotate (deg2rad 60) :z)
 			   :name :lleg)
 	      )
 	)
+  (send *robot* :angle-vector (send *ri* :potentio-vector))
   )
 
 (defun reset-pose ()
   (send *robot* :reset-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
   )
 
-(defun torso-45 ()
+(defun torso-45 (&key(run t))
   (send *robot* :torso :waist-y :joint-angle -45)
-  (send *ri* :angle-vector (send *robot* :angle-vector))
-  (send *ri* :wait-interpolation)
+  (when run
+    (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+    (send *ri* :wait-interpolation)
+    )
   )
 
 (defun torso45 ()
   (send *robot* :torso :waist-y :joint-angle 45)
-  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
   (send *ri* :wait-interpolation)
   )
 
@@ -101,6 +104,6 @@
   ;; (send *ri* :angle-vector (send *robot* :angle-vector))
   ;; (send *ri* :wait-interpolation)
   (arm-solve-ik :larm-trans-pos #f(300 -100 300) :rarm-trans-pos #f(300 100 0))
-  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
   (send *ri* :wait-interpolation)
   )

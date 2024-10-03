@@ -61,3 +61,7 @@ vision
 rosbag play ~~
 roslaunch coral_usb
 roslaunch jsk_perception
+
+
+send *ri* :start-log
+save-log
