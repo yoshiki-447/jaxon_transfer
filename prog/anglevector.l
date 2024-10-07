@@ -71,7 +71,7 @@
 (send *rb* :ros-init)
 
 ;;(send *rb* :ros-motion)
-;;(nreverse joint1)
-;;(setq time-list (make-list (length joint1) :initial-element 3000))	 
+     ;;(nreverse joint1)
+     ;;(setq time-list (make-list (length joint1) :initial-element 3000))	 
 ;;send *ri* :angle-vector (send *robot* :angle-vector (car joint1))
 ;;(send *ri* :angle-vector-sequence-full joint1 time-list)

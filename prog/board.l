@@ -90,7 +90,7 @@
     )
   )
 
-(defun torso45 ()
+(defun torso20 ()
   (send *robot* :torso :waist-y :joint-angle 20)
   (send *ri* :angle-vector (send *robot* :angle-vector) 10000)
   (send *ri* :wait-interpolation)
@@ -108,6 +108,12 @@
   (arm-solve-ik :larm-trans-pos #f(300 -200 250) :rarm-trans-pos #f(400 -50 0)
 		:rarm-rpy (float-vector (deg2rad -25) (deg2rad 0) (deg2rad 0))
 		:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0)))
-  ;; (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
-  ;; (send *ri* :wait-interpolation)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  )
+
+(defun all ()
+  (lleg-foot)
+  (posture)
+  (torso20)
   )
