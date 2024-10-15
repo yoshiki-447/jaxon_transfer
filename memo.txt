@@ -65,3 +65,5 @@ roslaunch jsk_perception
 
 send *ri* :start-log
 save-log
+
+(dotimes (i 1) (send *robot* :reset-pose) (lleg-foot :run nil)(start-pos :run nil) (send *irtviewer* :draw-objects) (wake))

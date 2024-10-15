@@ -5,7 +5,7 @@ ssh leus@jaxonred pass leus
 ./start-arai.sh
 
 (hrpsysタブでCtrl+C)
-servoタブを停止
+rvizでjaxonがピンとなっていたらservoタブを停止
 12V電源つける
 rvizとjaxonが連携しているか確認
 servoタブを起動
@@ -16,10 +16,10 @@ hall_statusが水色か確認
 scriptタブでipython -i jaxon_red_with_mslhand_setup.py
 hcf.servoOnWithResetPose()
 
-hcf.ast_svc.startAutoBalancer()
+hcf.ast_svc.startAutoBalancer()  or roseusで(send *ri* :start-auto-balancer)
 hcf.removeForceSensorOffsetRMFO()
 jaxonを地面につける
-hcf.ast_svc.startStabilizer()
+hcf.ast_svc.startStabilizer()  or roseusで(send *ri* :start-st)
 
 
 緊急停止ボタンを押す

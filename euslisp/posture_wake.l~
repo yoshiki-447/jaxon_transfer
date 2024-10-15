@@ -1,0 +1,1 @@
+send *robot* :rarm :collar-y :joint-angle
