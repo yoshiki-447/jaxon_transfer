@@ -158,7 +158,11 @@
   )
 
 (defun start-pos (&key (run t))
-  (send *robot* :larm :shoulder-p :joint-angle 20)
+  ;; (send *robot* :larm :shoulder-p :joint-angle 20)
+  (send *robot* :larm :shoulder-p :joint-angle -10)
+  (send *robot* :larm :collar-y :joint-angle -10)
+  (send *robot* :larm :shoulder-y :joint-angle 10)
+  (send *robot* :larm :elbow-p :joint-angle -70)
 
   (send *robot* :torso :waist-r :joint-angle 5)
   (send *robot* :torso :waist-p :joint-angle 20)
@@ -168,7 +172,6 @@
   (send *robot* :rarm :elbow-p :joint-angle -30)
   
   ;; (arm-solve-ik :larm-trans-pos #f(0 0 100))
-  
   (send *robot* :larm :wrist-y :joint-angle -40)
   (send *robot* :larm :wrist-r :joint-angle 40)
   
@@ -184,6 +187,7 @@
   (full-solve-ik-locate :rarm-rpy (float-vector (deg2rad 45) (deg2rad 0) (deg2rad 0))
 			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
 			:centroid 0.2)
+  ;;send *robot* :larm :end-coords #<cascaded-coords #X55e474f3b6e8 :larm-end-coords  271.595 429.084 939.314 / -0.005 -0.001 1.572>
   (when run
     (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
     (send *ri* :wait-interpolation)
@@ -253,7 +257,7 @@
 ;;   )
 
 ;; (defun generate-circle-trajectory (center radius num-points)
-(defun generate-circle-trajectory (&key (start-pos) (center2hand) (num-points))
+(defun generate-circle-trajectory (&key (start-pos) (center2hand) (num-points) (larm nil))
   ;; centerは円の中心座標、radiusは半径、num-pointsは軌道上の点の数
   (let ((center (v- start-pos center2hand))
 	(radius (norm center2hand))
@@ -261,8 +265,15 @@
         (trajectory '()))  ;; 結果を蓄積するリスト
     (dotimes (i (+ num-points 1))  ;; iが0から(num-points-1)までのループ
       (let ((theta (* i theta-step)))
-	(setq target-circle (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos theta))) (* radius (sin theta)))))
-	(setq circle (v+ center (send target-circle :pos)))
+	(cond (larm
+	       (setq target-circle (make-coords :pos (float-vector 0.0 (* radius (sin theta)) (* radius (cos theta)))))
+	       (setq circle (v+ center (send target-circle :pos)))  ;;larm
+	       )
+	      (t
+	       (setq target-circle (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos theta))) (* radius (sin theta)))))
+	       (setq circle (v+ center (send target-circle :pos)))  ;;rarm
+	       )
+	      )
         (cond ((> (length trajectory) 0)
 	       (nconc trajectory (list circle))
 	       )
@@ -317,7 +328,52 @@
     )
   )
 
-(defun follow-circle (&key (trajectory nil) (run nil) &allow-other-keys)
+(defun full-link6-ik-locate
+    (&key(rarm-trans-pos (send *robot* :rarm_link6_lk :worldpos))
+	 (larm-trans-pos (send *robot* :larm :end-coords :worldpos))
+	 (rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
+	 (larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
+	 (centroid 0.5))
+  (let* ((rleg-coords (send *robot* :rleg :end-coords :copy-worldcoords))
+	 (lleg-coords (send *robot* :lleg :end-coords :copy-worldcoords))
+	 (rarm-link6-coords (send *robot* :rarm_link6_lk :copy-worldcoords))
+	 (larm-link6-coords (send *robot* :larm_link6_lk :copy-worldcoords))
+	 (rarm-translation-coords (send rarm-link6-coords :locate rarm-trans-pos :world) :copy-worldcoords)
+	 (larm-translation-coords (send larm-link6-coords :locate larm-trans-pos :world) :copy-worldcoords)
+	 (rarm-target (make-coords :pos (send rarm-translation-coords :pos)
+				   :rpy rarm-rpy))
+	 (larm-target (make-coords :pos (send larm-translation-coords :pos)
+				   :rpy larm-rpy))
+	 (rarm-move-target (arrow)))
+    (send rarm-move-target :newcoords (send rarm-link6-coords :rotate (/ pi 2.0) :y))
+    (format t "coords: ~A~%" rarm-move-target)
+    (send (send (send *robot* :rarm :end-coords) :parent) :assoc rarm-move-target)
+    (objects (list *robot* rarm-target rarm-move-target))
+    (send *robot* :fullbody-inverse-kinematics
+	  (list rleg-coords lleg-coords rarm-target larm-target)
+	  :move-target (list (send *robot* :rleg :end-coords)
+			     (send *robot* :lleg :end-coords)
+			     rarm-move-target
+			     (send *robot* :larm :end-coords))
+	  :link-list (list (send *robot* :link-list (send *robot* :rleg :end-coords :parent))
+			   (send *robot* :link-list (send *robot* :lleg :end-coords :parent))
+			   (send *robot* :link-list (send *robot* :rarm :end-coords :parent))
+			   (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
+	  :translation-axis (list t t t t) 
+	  ;; :rotation-axis (list t t nil nil)
+	  ;; :rotation-axis (list t t t nil)
+	  :rotation-axis (list t t t t)
+	  :target-centroid-pos (midpoint centroid
+	  				 (send *robot* :rleg :end-coords :worldpos)
+	  				 (send *robot* :lleg :end-coords :worldpos))
+	  :cog-translation-axis :z
+	  )
+    (objects (list *robot* rarm-target))
+    ;; (send *robot* :newcoords (make-coords))
+    )
+  )
+
+(defun follow-circle (&key (trajectory nil) (l_tra nil) (run nil) &allow-other-keys)
   ;;(setq r-angle 60)
   ;;(setq same-angle (/ r-angle (- (length trajectory) 1)))
   (setq start-value 0.2)
@@ -326,12 +382,22 @@
   (setq l-start 90)
   (setq l-diff (/ l-start (- (length trajectory) 1)))
   
-  (dolist (target trajectory)
+  ;; (dolist (target trajectory)
+  (dotimes (i (length trajectory))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
-    (full-solve-ik-locate :rarm-trans-pos target
-			  :rarm-rpy (float-vector (deg2rad 45) (deg2rad 0) (deg2rad 0))
-			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
-			  :centroid start-value)
+    (setq r_target (elt trajectory i))
+    (setq l_target (elt l_tra i))
+    (full-solve-ik-locate :rarm-trans-pos r_target
+    			  :larm-trans-pos l_target
+    			  :rarm-rpy (float-vector (deg2rad 45) (deg2rad 0) (deg2rad 0))
+    			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
+    			  :centroid start-value)
+    ;; (full-link6-ik-locate :rarm-trans-pos r_target
+    ;; 			  :larm-trans-pos l_target
+    ;; 			  :rarm-rpy (float-vector (deg2rad 45) (deg2rad 0) (deg2rad 0))
+    ;; 			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
+    ;; 			  :centroid start-value)
+    
     ;; (print "Enter to next")(read-line)
     (unix:usleep 200000)
     (when run
@@ -352,7 +418,7 @@
   ;; (send *ri* :wait-interpolation)
   
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
-  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10))))
+  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :center2hand #f(0 0 200) :num-points 10 :larm t))))
   ;; (follow-circle :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :run nil)
 
   )
@@ -395,6 +461,8 @@
 	 )
 	3000)
   )
+
+;;(send *ri* :stop-impedance :larm)
 
 ;;;;;;;;;;;;
 
