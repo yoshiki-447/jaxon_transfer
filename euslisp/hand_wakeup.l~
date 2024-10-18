@@ -130,26 +130,24 @@
   (send *ri* :wait-interpolation)
   )
 
-(defun move-waist (&key(dz) (tm) (run t))
+(defun move-waist (&key(dz) (tm))
        (send *robot* :fix-leg-to-coords (make-coords))
        (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
        (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
-       (when run
-	 (send *ri* :angle-vector (send *robot* :angle-vector) tm)
-	 (send *ri* :wait-interpolation)
-	 )
+       (send *ri* :angle-vector (send *robot* :angle-vector) tm)
+       (send *ri* :wait-interpolation)
        ;; (send *robot* :newcoords (make-coords))
        (send *robot* :fix-leg-to-coords (make-coords))
        )
 
 (defun upper-waist
-    (&key (dz -60) (tm 5000) (run t))
-  (move-waist :dz dz :tm tm :run run)
+    (&optional (dz -60) (tm 5000))
+  (move-waist :dz dz :tm tm)
   )
 
 (defun lower-waist
-    (&key (dz 60) (tm 5000) (run t))
-  (move-waist :dz dz :tm tm :run run) 
+    (&optional (dz 60) (tm 5000))
+  (move-waist :dz dz :tm tm)
   ;;(send *robot* :reset-pose)
   ;; (send *robot* :fix-leg-to-coords (make-coords))
   ;; (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
