@@ -267,6 +267,7 @@
   			:rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 30))
   			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:centroid 0.2)
+  
   ;;:larm-end-coords  595.177 379.498 1035.012 / -0.0 0.004 1.57>
   ;;:rarm-end-coords  682.921 -173.113 960.487 / 1.047 -0.26 0.264>
   (when run
@@ -281,7 +282,8 @@
   (let* ((center2hand (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos angle))) (* radius (sin angle)))))
 	 (center (v- start-pos (send center2hand :pos)))
 	 ;;(radius (norm center2hand))
-	 (theta-step (/ (- (/ pi 2) angle) num-points))
+	 ;;(theta-step (/ (- (/ pi 2) angle) num-points))
+	 (theta-step (/ (- (deg2rad 100) angle) num-points))
 	 (trajectory '())) ;; 結果を蓄積するリスト
     (when larm
       (setq center2hand (make-coords :pos (float-vector 0.0 (* radius (sin angle)) (* radius (cos angle)))))
@@ -300,7 +302,7 @@
 	       (setq circle (v+ center (send target-circle :pos)))  ;;larm
 	       )
 	      (t
-	       (setq target-circle (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos theta))) (* radius (sin theta)))))
+	       (setq target-circle (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos theta))) (* 0.8 (* radius (sin theta))))))
 	       (setq circle (v+ center (send target-circle :pos)))  ;;rarm
 	       )
 	      )
@@ -314,12 +316,17 @@
 	       )
 	      )
 	)
+      
       ;; (objects (list *robot* c1 c2))
       )
     trajectory
     )
   )
+;;1.0 #f(2.60247 -6.00394 -11.0622 33.1305 -13.8525 8.69862 1.01199 5.0384 -14.6516 41.1222 -18.2684 -2.45692 -9.0 0.488774 16.0167 0.0 0.0 72.1527 7.24576 -87.4261 -2.71201 -40.211 -77.1768 47.3128 38.1003 -30.3935 -4.36677 29.2802 25.9639 -40.1276 2.09793 -18.7599 -28.7444 0.0 90.0 0.0 0.0 0.0 0.0 0.0 90.0 0.0 0.0 0.0 0.0)
 
+;;0.8 #f(2.63546 -4.76739 -7.81597 28.298 -11.7638 8.3082 0.960873 6.15772 -12.2783 38.1915 -17.1747 -2.74342 -9.0 0.846528 16.5396 0.0 0.0 69.7128 11.3455 -97.5413 -2.90371 -36.0361 -92.527 53.2542 45.0157 -30.7827 -4.20538 29.4458 26.3944 -39.7477 1.1132 -18.6943 -29.2671 0.0 90.0 0.0 0.0 0.0 0.0 0.0 90.0 0.0 0.0 0.0 0.0)
+
+;;(deg2rad100) #f(1.42351 -1.33683 -16.5884 36.5786 -13.8806 6.97151 0.200107 9.99125 -21.1849 46.4056 -19.0182 -4.42155 -9.0 3.22976 16.5061 0.0 0.0 77.6838 2.12072 -94.2817 -3.25144 -37.535 -81.0461 43.2563 44.4486 -39.0844 -8.38488 39.1607 30.8134 -18.3864 -2.24319 -20.4827 -45.4533 0.0 90.0 0.0 0.0 0.0 0.0 0.0 90.0 0.0 0.0 0.0 0.0)
 
 (defun full-solve-ik-locate
     (&key(rarm-trans-pos (send *robot* :rarm :end-coords :worldpos))
@@ -369,31 +376,31 @@
   (setq diff (/ (- finish-value start-value) (- (length trajectory) 1)))
   (setq l-start 90)
   (setq l-diff (/ l-start (- (length trajectory) 1)))
-  ;; (setq r-pitch -30)
-  ;; (setq r-yaw 30)
-  (setq r-pitch -50)
-  (setq r-yaw 42)
-  ;;(setq pitch-diff (/ l-diff 2))  ;1or2..
+  (setq r-pitch -30)
+  (setq r-yaw 30)
+  ;; (setq r-pitch -50)
+  ;; (setq r-yaw 42)
+  (setq pitch-diff (/ l-diff 1))  ;1or2..
   (setq r-diff (* (/ l-diff 3) 2))
   ;; (dolist (target trajectory)
   (dotimes (i (length trajectory))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
     (setq r_target (elt trajectory i))
     (setq l_target (elt l_tra i))
-    ;; (full-solve-ik-locate :rarm-trans-pos r_target
-    ;; 			  :larm-trans-pos l_target
-    ;; 			  ;; :rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 0))
-    ;; 			  ;;:rarm-rpy (float-vector (deg2rad 60) (deg2rad r-pitch) (deg2rad r-yaw)) ;;pattern2
-    ;; 			  ;; :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad (- l-start 90)))  ;;pattern1
-    ;; 			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
-    ;; 			  :centroid start-value)
-    (full-link6-ik-locate :rarm-trans-pos r_target
+    (full-solve-ik-locate :rarm-trans-pos r_target
     			  :larm-trans-pos l_target
-    			  :rarm-rpy (float-vector (deg2rad 41) (deg2rad r-pitch) (deg2rad r-yaw))
+    			  ;; :rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 0))
+    			  :rarm-rpy (float-vector (deg2rad 60) (deg2rad r-pitch) (deg2rad r-yaw)) ;;pattern2
+    			  ;; :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad (- l-start 90)))  ;;pattern1
     			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
     			  :centroid start-value)
+    ;; (full-link6-ik-locate :rarm-trans-pos r_target
+    ;; 			  :larm-trans-pos l_target
+    ;; 			  ;; :rarm-rpy (float-vector (deg2rad 41) (deg2rad r-pitch) (deg2rad r-yaw))
+    ;; 			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
+    ;; 			  :centroid start-value)
     ;;(objects (list *robot* r_target))
-    ;; (print "Enter to next")(read-line)
+    (print "Enter to next")(read-line)
     (unix:usleep 200000)
     (when run
       (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
@@ -401,7 +408,7 @@
     (setq start-value (+ start-value diff))
     ;;(setq r-angle (- r-angle same-angle))
     (setq l-start (- l-start l-diff))
-    (setq r-pitch (+ r-pitch r-diff))
+    (setq r-pitch (+ r-pitch pitch-diff))
     (setq r-yaw (- r-yaw r-diff))
     )
   )
@@ -415,7 +422,7 @@
   ;; (send *ri* :wait-interpolation)
   
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
-  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 200 :angle (deg2rad 0) :num-points 10 :larm t))))  ;;rarm300or400 larm100or200
+  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 275 :angle (deg2rad 0) :num-points 10 :larm t))))  ;;rarm300or400 larm100or200
   ;; (follow-circle :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :run nil)
 
   )
