@@ -190,7 +190,9 @@
 	  )
 
     (send *robot* :fix-leg-to-coords (make-coords))
-    ))
+    (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
+    )
+  )
 
 (defun move-waist (&key(dz) (tm) (run t))
        (send *robot* :fix-leg-to-coords (make-coords))
@@ -263,7 +265,7 @@
   ;;pattern2
   (send *robot* :torso :waist-p :joint-angle 20)
   (full-solve-ik-locate :rarm-trans-pos #f(650 -200 950)
-  			:larm-trans-pos #f(500 250 1200)
+  			:larm-trans-pos #f(500 250 1100) ;;#f(500 250 1200)
   			:rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 30))
   			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:centroid 0.2)
@@ -288,7 +290,7 @@
     (when larm
       (setq center2hand (make-coords :pos (float-vector 0.0 (* radius (sin angle)) (* radius (cos angle)))))
       (setq center (v- start-pos (send center2hand :pos)))
-      ;;(theta-step (/ (- (/ pi 2) angle) num-points))
+      (setq theta-step (/ (- (/ pi 2) angle) num-points))
       )
     ;; (setq c1 (make-cube 100 100 100))
     ;; (setq c2 (make-cube 100 100 100))
@@ -298,7 +300,7 @@
       (let ((theta (* i theta-step)))
 	(setq theta (+ theta angle))
 	(cond (larm
-	       (setq target-circle (make-coords :pos (float-vector 0.0 (* radius (sin theta)) (* radius (cos theta)))))
+	       (setq target-circle (make-coords :pos (float-vector 0.0 (* 1.4 (* radius (sin theta))) (* 1.0 (* radius (cos theta))))))
 	       (setq circle (v+ center (send target-circle :pos)))  ;;larm
 	       )
 	      (t
@@ -400,10 +402,10 @@
     ;; 			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
     ;; 			  :centroid start-value)
     ;;(objects (list *robot* r_target))
-    (print "Enter to next")(read-line)
+    ;;(print "Enter to next")(read-line)
     (unix:usleep 200000)
     (when run
-      (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+      (send *ri* :angle-vector (send *robot* :angle-vector) 500)
       (send *ri* :wait-interpolation))
     (setq start-value (+ start-value diff))
     ;;(setq r-angle (- r-angle same-angle))
@@ -422,7 +424,7 @@
   ;; (send *ri* :wait-interpolation)
   
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
-  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 275 :angle (deg2rad 0) :num-points 10 :larm t))))  ;;rarm300or400 larm100or200
+  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 200 :angle (deg2rad 0) :num-points 10 :larm t))))  ;;larm200or275
   ;; (follow-circle :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :run nil)
 
   )
@@ -467,7 +469,8 @@
   )
 
 ;;(send *ri* :stop-impedance :larm)
-;;progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (start-pos :run nil)
+;;progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (start-pos :run nil) (wake)
+;;progn (reset-pose) (lleg-foot :run nil) (send *ri* :angle-vector (send *robot* :angle-vector) 5000) (lower-waist) (start-pos) (wake :run t)
 ;;;;;;;;;;;;
 
 (defun test-motion ()
