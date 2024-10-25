@@ -69,3 +69,5 @@ save-log
 (dotimes (i 1) (send *robot* :reset-pose) (lleg-foot :run nil)(start-pos :run nil) (send *irtviewer* :draw-objects) (wake))
 
 car (send (send *robot* :rarm :end-coords :copy-worldcoords) :rpy-angle)
+
+jaxongoogle leus1783

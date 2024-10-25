@@ -10,3 +10,4 @@
 
 ;;(load "tutorial.l")
 (load "package://control_tools/play-hrpsysfile.l")
+(send *ri* :set-log-maxlength (* 500 120))

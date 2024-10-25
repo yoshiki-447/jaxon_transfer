@@ -25,3 +25,7 @@ hcf.ast_svc.startStabilizer()  or roseusで(send *ri* :start-st)
 緊急停止ボタンを押す
 scriptタブでhcf.servoOff()
 12V電源落とす
+
+
+jaxonの裏側の基盤はふれたら死ぬ
+緊急停止ボタンを外して75Vがついていない場合はすぐ緊急停止ボタンを押す（電流は流れるから？）

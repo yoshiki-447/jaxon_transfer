@@ -108,7 +108,7 @@
 			      (send
 			       (send *robot* :rleg :end-coords :copy-worldcoords)
 			       :translate (float-vector 0 -200 0))
-			      :rotate (deg2rad -40) :z)
+			      :rotate (deg2rad -45) :z)
 			     )
 	;; (target-lleg-coords1 (send
 	;; 		      (send
@@ -189,10 +189,14 @@
   ;; (arm-solve-ik-locate :larm-trans-pos #f(600 200 1000) :rarm-trans-pos #f(550 -300 700)
   ;; 		:rarm-rpy (float-vector (deg2rad -15) (deg2rad 0) (deg2rad 0))
   ;; 		:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0)))
-  (full-solve-ik-locate :larm-trans-pos #f(800 -300 1000) :rarm-trans-pos #f(400 -650 725)
-			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
-			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
-			:centroid 0.2)
+  (full-solve-ik-locate :larm-trans-pos #f(750 -300 1100) :rarm-trans-pos #f(400 -650 725)
+  			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  			:centroid 0.2)
+  ;; (full-solve-ik-locate :larm-trans-pos #f(800 -300 1000) :rarm-trans-pos #f(400 -650 725)
+  ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  ;; 			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  ;; 			:centroid 0.2)  ;;一回目の実験、左手ちょい低い、軽マネキンだと左右の腕の幅長い
   ;; (full-solve-ik-locate :larm-trans-pos #f(750 -200 1100) :rarm-trans-pos #f(450 -550 750)
   ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0))
   ;; 			:larm-rpy (float-vector (deg2rad -25) (deg2rad 0) (deg2rad 0))
@@ -252,7 +256,7 @@
 	 (center2hand (v- (send *robot* :rarm :end-coords :worldpos) center))
 	 (radius (norm center2hand))
 	 ;;(theta-step (/ (- (/ pi 2) angle) num-points))
-	 (theta-step (/ (- (deg2rad 80) angle) num-points))  ;;60or90
+	 (theta-step (/ (- (deg2rad 60) angle) num-points))  ;;60or90
 	 (diff-z (/ height num-points))
 	 ;; (ini-theta (atan (aref (send *robot* :rarm :end-coords :worldpos) 0) (aref (send *robot* :rarm :end-coords :worldpos) 1)))
 	 (ini-theta (atan (aref center2hand 0) (aref center2hand 1)))
