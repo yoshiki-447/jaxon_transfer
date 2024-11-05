@@ -71,3 +71,7 @@ save-log
 car (send (send *robot* :rarm :end-coords :copy-worldcoords) :rpy-angle)
 
 jaxongoogle leus1783
+
+setq a (gnuplot)
+setq b listをつくる
+send a b

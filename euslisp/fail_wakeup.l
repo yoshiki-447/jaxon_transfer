@@ -78,6 +78,11 @@
   (send *robot* :fix-leg-to-coords (make-coords))
   )
 
+(defun irt-ri ()
+  (send *ri* :angle-vector (send *robot* :angle-vector) 10000)
+  (send *ri* :wait-interpolation)
+  )
+
 (defun lleg-foot (&key (run t))
   (let ((target-lleg-coords (send (send *robot* :lleg :end-coords :copy-worldcoords)
 				  :translate (float-vector 0 150 0))
@@ -333,19 +338,23 @@
     )
   )
 
+(defvar *angle-list* '())
+(defvar *time-list* '())
 (defun follow-circle (&key (trajectory nil) (l_tra nil) (run nil) &allow-other-keys)
   ;;(setq r-angle 60)
   ;;(setq same-angle (/ r-angle (- (length trajectory) 1)))
   (setq start-value 0.2)
   (setq finish-value 0.8)
   (setq diff (/ (- finish-value start-value) (- (length trajectory) 1)))
-  (setq l-start 90)
+  (setq l-start 90.0)
   (setq l-diff (/ l-start (- (length trajectory) 1)))
-  (setq r-pitch -15)
-  (setq r-roll 60)
+  (setq r-pitch -15.0)
+  (setq r-roll 60.0)
   (setq pitch-diff (/ l-diff 2))  ;1or2..
   (setq r-diff (/ l-diff 3))
-  
+
+  (setq *angle-list* '())
+  (setq *time-list* '())
   ;; (dolist (target trajectory)
   (dotimes (i (length trajectory))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
@@ -363,16 +372,31 @@
     ;; 			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
     ;; 			  :centroid start-value)
     
-    (print "Enter to next")(read-line)
-    (unix:usleep 200000)
-    (when run
-      (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
-      (send *ri* :wait-interpolation))
+    ;;(print "Enter to next")(read-line)
+    (unix:usleep 50000)
+    ;; (when run
+    ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 1000)
+    ;;   (send *ri* :wait-interpolation))
     (setq start-value (+ start-value diff))
     ;;(setq r-angle (- r-angle same-angle))
     (setq l-start (- l-start l-diff))
     (setq r-pitch (+ r-pitch pitch-diff))
     (setq r-roll (+ r-roll r-diff))
+    (setq position (send *robot* :angle-vector))
+    (cond ((> (length *angle-list*) 0)
+  	   (nconc *angle-list* (list position))
+  	   )
+  	  (t
+  	   (push position *angle-list*)
+  	   )
+  	  )
+    (push 500 *time-list*)
+    )
+  (when run
+    (send *ri* :angle-vector (send *robot* :angle-vector (car *angle-list*)))
+    (send *ri* :wait-interpolation)
+    (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
+    (send *ri* :wait-interpolation)
     )
   )
 
@@ -387,7 +411,16 @@
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
   (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :center2hand #f(0 0 100) :num-points 10 :larm t))))  ;;rarm300or400 larm100or200
   ;; (follow-circle :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :run nil)
+  )
 
+(defun drawplot (&key(num 14)) ;;14 torso-y
+  (setq a (gnuplot))
+  (setq b '())
+  (dotimes (i (length *angle-list*))
+    (push (aref (elt *angle-list* i) num) b)
+    )
+  (nreverse b)
+  (send a :draw b)
   )
 
 (defun wake2
