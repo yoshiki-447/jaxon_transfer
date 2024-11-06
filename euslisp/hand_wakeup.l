@@ -434,7 +434,7 @@
     (push 50 *time-list*)
     )
   (when run
-    (send *ri* :angle-vector (send *robot* :angle-vector (car *angle-list*)))
+    (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
     (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
     (send *ri* :wait-interpolation)

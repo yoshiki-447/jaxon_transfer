@@ -182,27 +182,17 @@
   )
 
 (defun posture (&key(run t))
-  ;; (arm-solve-ik :larm-trans-pos #f(200 0 0) :rarm-trans-pos #f(200 0 0))
-  ;; (send *ri* :angle-vector (send *robot* :angle-vector))
-  ;; (send *ri* :wait-interpolation)
-  ;; (arm-solve-ik :larm-trans-pos #f(0 -100 100) :rarm-trans-pos #f(0 100 -100))
-  ;; (send *ri* :angle-vector (send *robot* :angle-vector))
-  ;; (send *ri* :wait-interpolation)
-
-  ;; (arm-solve-ik :larm-trans-pos #f(300 -200 250) :rarm-trans-pos #f(400 -50 0)
-  ;; 		:rarm-rpy (float-vector (deg2rad -25) (deg2rad 0) (deg2rad 0))
-  ;; 		:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0)))
-  
   ;;(send *robot* :reset-pose)
   (send *robot* :torso :waist-y :joint-angle -25)
   (send *robot* :torso :waist-p :joint-angle 25)
-  ;; (arm-solve-ik-locate :larm-trans-pos #f(600 200 1000) :rarm-trans-pos #f(550 -300 700)
-  ;; 		:rarm-rpy (float-vector (deg2rad -15) (deg2rad 0) (deg2rad 0))
-  ;; 		:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0)))
-  (full-solve-ik-locate :larm-trans-pos #f(750 -300 1100) :rarm-trans-pos #f(400 -650 725)
+  (full-solve-ik-locate :larm-trans-pos #f(700 -350 1000) :rarm-trans-pos #f(400 -650 725)
   			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
   			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
   			:centroid 0.2)
+  ;; (full-solve-ik-locate :larm-trans-pos #f(750 -300 1100) :rarm-trans-pos #f(400 -650 725)
+  ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  ;; 			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
+  ;; 			:centroid 0.2)  ;;２回目の実験、肘が上に来ているので回転後の左手が変
   ;; (full-solve-ik-locate :larm-trans-pos #f(800 -300 1000) :rarm-trans-pos #f(400 -650 725)
   ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
   ;; 			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
@@ -274,6 +264,7 @@
     (when larm
       ;; (setq center2hand (float-vector (aref (send *robot* :larm :end-coords :worldpos) 0) (aref (send *robot* :larm :end-coords :worldpos) 1) 0.0))
       ;; (setq center (v- start-pos center2hand))
+      ;; (setq center (float-vector 0.0 0.0 (aref (send *robot* :larm :end-coords :worldpos) 2)))
       (setq center (float-vector (aref (send *robot* :chest_link0_lk :worldpos) 0) (aref (send *robot* :chest_link0_lk :worldpos) 1) (aref (send *robot* :larm :end-coords :worldpos) 2)))
       (setq center2hand (v- (send *robot* :larm :end-coords :worldpos) center))
       (setq radius (norm center2hand))
@@ -330,10 +321,12 @@
   (setq *time-list* '())
   ;; (setq hand-diff (/ 90 (- (length trajectory) 1)))
   (setq hand-diff (/ 70.0 (- (length trajectory) 1)))  ;;70
+  (setq l-hand-diff (/ 20.0 (- (length trajectory) 1)))
   (dotimes (i (length trajectory))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
     (setq r_target (elt trajectory i))
     (setq l_target (elt l_tra i))
+    ;; (progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (posture :run nil))
     (full-solve-ik-locate :rarm-trans-pos r_target
     			  :larm-trans-pos l_target
     			  :rarm-rpy (float-vector (deg2rad r-yaw) (deg2rad 0) (deg2rad 0))
@@ -342,14 +335,14 @@
     			  :larm-rpy (float-vector (deg2rad l-yaw) (deg2rad 0) (deg2rad 0))
     			  :centroid start-value)
     ;;(objects (list *robot* r_target))
-    ;; (print "Enter to next")(read-line)
+    ;;(print "Enter to next")(read-line)
     (unix:usleep 50000)
     ;; (when run
     ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 500)
     ;;   (send *ri* :wait-interpolation))
     (setq start-value (+ start-value diff))
     (setq r-yaw (+ r-yaw hand-diff))
-    (setq l-yaw (+ l-yaw hand-diff))
+    (setq l-yaw (+ l-yaw l-hand-diff))
     
     (setq position (send *robot* :angle-vector))
     (cond ((> (length *angle-list*) 0)
@@ -367,7 +360,7 @@
   ;;angle-list
   ;;time-list
   (when run
-    (send *ri* :angle-vector (send *robot* :angle-vector (car *angle-list*)))
+    (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
     (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
     (send *ri* :wait-interpolation)
@@ -423,6 +416,7 @@
 	  :translation-axis (list t t t t) 
 	  ;; :rotation-axis (list t t nil nil)
 	  ;; :rotation-axis (list t t t nil)
+	  ;; :rotation-axis (list t t t :z)
 	  :rotation-axis (list t t t t)
 	  :target-centroid-pos (midpoint centroid
 	  				 (v+ (send *robot* :rleg :end-coords :worldpos) #f(0 0 0))
@@ -435,6 +429,7 @@
 	  			       (list (send *robot* :torso :waist-r :child-link) 0)
 	  			       (list (send *robot* :torso :waist-p :child-link) 1000.0)
 				       (list (send *robot* :larm :collar-y :child-link) 0.1)
+				       (list (send *robot* :larm :wrist-r :child-link) 0.1)
 				       )
 	  )
     (objects (list *robot* rarm-target))
