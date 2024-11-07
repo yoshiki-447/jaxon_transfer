@@ -8,3 +8,4 @@ SOURCE_SCRIPT="source ~/ros/auto_ws/devel/setup.bash"
 
 new-window roseus "${SOURCE_SCRIPT} && rossetjaxon_red && cd $(rospack find jaxon_transfer)/euslisp && em -f shell"
 new-window rviz "${SOURCE_SCRIPT} && rossetjaxon_red && rviz -d $(rospack find auto_stabilizer_config)/config/jaxonred-with-mslhand.rviz"
+new-window rosbag "${SOURCE_SCRIPT} && rossetjaxon_red && cd $(rospack find jaxon_transfer)/rosbag"

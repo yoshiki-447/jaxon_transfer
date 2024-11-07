@@ -311,6 +311,7 @@
 
 (defvar *angle-list* '())
 (defvar *time-list* '())
+(defvar *wrench-list* '())
 (defun follow-circle (&key (trajectory nil) (l_tra nil) (run nil) &allow-other-keys)
   (setq start-value 0.2)
   (setq finish-value 0.8)
@@ -319,6 +320,7 @@
   (setq l-yaw -35.0)
   (setq *angle-list* '())
   (setq *time-list* '())
+  (setq *wrench-list* '())
   ;; (setq hand-diff (/ 90 (- (length trajectory) 1)))
   (setq hand-diff (/ 70.0 (- (length trajectory) 1)))  ;;70
   (setq l-hand-diff (/ 20.0 (- (length trajectory) 1)))
@@ -353,7 +355,6 @@
   	   )
   	  )
     (push 50 *time-list*)
-    
     )
   ;;(format t "angle-list: ~A~%" *angle-list*)
   (format t "time-list: ~A~%" *time-list*)

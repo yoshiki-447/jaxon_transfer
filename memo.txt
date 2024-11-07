@@ -74,4 +74,10 @@ jaxongoogle leus1783
 
 setq a (gnuplot)
 setq b listをつくる
-send a b
+send a :draw b
+
+
+send *ri* :set-interpolation-mode :linear
+
+rosbag playしてrvizに反映
+rosrun rqt_plot rqt_plot topic選んで値をグラフにする

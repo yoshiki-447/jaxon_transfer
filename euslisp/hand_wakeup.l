@@ -283,27 +283,47 @@
     )
   )
 
+(defun theta-function (&key(a) (b) (f) (c))
+  (setq theta (+ (* a (cos (* b f))) c))
+  theta
+  )
+
 ;; (defun generate-circle-trajectory (center radius num-points)
-(defun generate-circle-trajectory (&key (start-pos) (radius) (angle) (num-points) (larm nil))
+(defun generate-circle-trajectory (&key (start-pos) (radius) (angle) (finish-angle) (num-points) (larm nil))
   ;; centerは円の中心座標、radiusは半径、num-pointsは軌道上の点の数
   (let* ((center2hand (make-coords :pos (float-vector 0.0 (- 0.0 (* radius (cos angle))) (* radius (sin angle)))))
 	 (center (v- start-pos (send center2hand :pos)))
 	 ;;(radius (norm center2hand))
-	 ;;(theta-step (/ (- (/ pi 2) angle) num-points))
-	 (theta-step (/ (- (deg2rad 100.0) angle) num-points))
+	 ;; (theta-step (theta-function :a (/ (- angle (deg2rad 100.0)) 2)
+	 ;; 			     :b (/ pi num-points)
+	 ;; 			     :t
+	 ;; 			     :c (+ (/ (- (deg2rad 100.0) angle) 2) angle)
+	 ;; 			     ))
+	 ;; (theta-step (/ (- (deg2rad 100.0) angle) num-points))
 	 (trajectory '())) ;; 結果を蓄積するリスト
     (when larm
       (setq center2hand (make-coords :pos (float-vector 0.0 (* radius (sin angle)) (* radius (cos angle)))))
       (setq center (v- start-pos (send center2hand :pos)))
-      (setq theta-step (/ (- (/ pi 2) angle) num-points))
+      ;; (setq theta-step (/ (- (/ pi 2) angle) num-points))
       )
     ;; (setq c1 (make-cube 100 100 100))
     ;; (setq c2 (make-cube 100 100 100))
     ;; (send c1 :locate center :world)
+    ;;
+  ;;  (setq b '())
+    ;;
     (dotimes (i (+ num-points 1))
       ;; (print "Enter to next")(read-line)
-      (let ((theta (* i theta-step)))
-	(setq theta (+ theta angle))
+      ;; (let ((theta (* i theta-step)))
+      ;; (setq theta (+ theta angle))
+      (let ((theta (theta-function :a (/ (- angle finish-angle) 2.0)
+				   :b (/ pi num-points)
+				   :f i
+				   :c (+ (/ (- finish-angle angle) 2.0) angle)
+				   )))
+	;;
+;;	(push theta b)
+	;;
 	(cond (larm
 	       (setq target-circle (make-coords :pos (float-vector 0.0 (* 1.4 (* radius (sin theta))) (* 1.0 (* radius (cos theta))))))
 	       (setq circle (v+ center (send target-circle :pos)))  ;;larm
@@ -326,6 +346,11 @@
       
       ;; (objects (list *robot* c1 c2))
       )
+    ;;
+    ;; (setq a (gnuplot))
+    ;; (nreverse b)
+    ;; (send a :draw b)
+    ;;
     trajectory
     )
   )
@@ -370,7 +395,7 @@
 	  				 (send *robot* :lleg :end-coords :worldpos))
 	  :cog-translation-axis :z
 	  )
-    (objects (list *robot* rarm-target))
+    ;;(objects (list *robot* rarm-target))
     ;; (send *robot* :newcoords (make-coords))
     )
   )
@@ -394,6 +419,7 @@
 
   (setq *angle-list* '())
   (setq *time-list* '())
+  (send *ri* :set-interpolation-mode :linear)
   ;; (dolist (target trajectory)
   (dotimes (i (length trajectory))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
@@ -413,7 +439,7 @@
     ;; 			  :centroid start-value)
     ;;(objects (list *robot* r_target))
     ;;(print "Enter to next")(read-line)
-    (unix:usleep 50000)
+    ;;(unix:usleep 1000)
     ;; (when run
     ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 500)
     ;;   (send *ri* :wait-interpolation))
@@ -431,13 +457,18 @@
   	   (push position *angle-list*)
   	   )
   	  )
-    (push 50 *time-list*)
+    (push 2.0 *time-list*)
+    )
+  (setq a 10.0)
+  (dotimes (i 499)
+    (setf (elt *time-list* i) a)
+    (setq a (- a 0.018))
     )
   (when run
     (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
-    (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
-    (send *ri* :wait-interpolation)
+    ;; (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
+    ;; (send *ri* :wait-interpolation)
     )
   )
 
@@ -450,7 +481,7 @@
   ;; (send *ri* :wait-interpolation)
   
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
-  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :num-points 100) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 200 :angle (deg2rad 0) :num-points 100 :larm t))))  ;;larm200or275
+  (apply #'follow-circle (append args (list :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :radius 500 :angle (deg2rad 10) :finish-angle (deg2rad 100) :num-points 5000) :l_tra (generate-circle-trajectory :start-pos (send *robot* :larm :end-coords :worldpos) :radius 200 :angle (deg2rad 0) :finish-angle (deg2rad 90) :num-points 5000 :larm t))))  ;;larm200or275
   ;; (follow-circle :trajectory (generate-circle-trajectory :start-pos (send *robot* :rarm :end-coords :worldpos) :center2hand #f(0 -400 0) :num-points 10) :run nil)
 
   )
