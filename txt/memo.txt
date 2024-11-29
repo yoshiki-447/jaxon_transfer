@@ -80,6 +80,7 @@ send *ri* :set-interpolation-mode :linear
 
 rosbag playしてrvizに反映
 rosrun rqt_plot rqt_plot topic選んで値をグラフにする
+rqt_plotでもいける
 
 send *ri* :state :reference-force-vector
 send *ri* :state :reference-moment-vector

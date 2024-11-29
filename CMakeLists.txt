@@ -137,7 +137,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/jaxon_transfer_node.cpp)
 
-add_executable(force_transformer_node src/force_coords.cpp)
+add_executable(force_coords src/force_coords.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,7 +154,7 @@ add_executable(force_transformer_node src/force_coords.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(force_transformer_node ${catkin_LIBRARIES})
+target_link_libraries(force_coords ${catkin_LIBRARIES})
 
 #############
 ## Install ##

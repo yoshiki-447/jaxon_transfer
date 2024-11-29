@@ -77,7 +77,7 @@ private:
 };
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "force_transformer_node");
+  ros::init(argc, argv, "force_coords");
   ForceTransformer force_transformer;
   ros::spin();
   return 0;
