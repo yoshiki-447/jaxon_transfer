@@ -65,6 +65,100 @@
   (send *ri* :stop-auto-balancer)
   )
 
+(defun initial-pos ()
+  ;; (arm-solve-ik :larm-trans-pos #f(300 0 200) :rarm-trans-pos #f(300 0 0)
+  ;; 		:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0))
+  ;; 		:rarm-rpy (float-vector (deg2rad 40) (deg2rad 0) (deg2rad 0)))
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;; (send *ri* :wait-interpolation)
+  (arm-solve-ik :larm-trans-pos #f(300 0 200)
+		:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  (arm-solve-ik :larm-trans-pos #f(0 0 -200)
+		:larm-rpy (float-vector (deg2rad 0) (deg2rad 60) (deg2rad 60)))
+		;;:rarm-rpy (float-vector (deg2rad 40) (deg2rad 0) (deg2rad 0)))  ;;初期姿勢
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  )
+
+(defun bed-knee ()
+  (arm-solve-ik :larm-trans-pos #f(-200 0 0)
+		:larm-rpy (float-vector (deg2rad 0) (deg2rad 60) (deg2rad 60)))
+		;;:rarm-rpy (float-vector (deg2rad 40) (deg2rad 0) (deg2rad 0)))  ;;被介助者の膝を出す
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  )
+
+(defun support ()
+  (arm-solve-ik :larm-trans-pos #f(200 0 100)
+		:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
+		;;:rarm-rpy (float-vector (deg2rad 40) (deg2rad 0) (deg2rad 0)))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)  ;;左手で腰(or膝)を支える
+  (send *ri* :wait-interpolation)
+  )
+
+(defun rarm-neck ()
+  (full-solve-ik :rarm-trans-pos #f(300 0 200)
+		 :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)) :centroid 0.2)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  (send *robot* :rarm :wrist-r :joint-angle 40)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  (send *ri* :wait-interpolation)
+  )
+
+(defun finish-pos (&key (run t))
+  (send *robot* :reset-pose)
+  ;;(upper-waist)
+  ;;(arm-solve-ik :larm-trans-pos #f(0 0 -150))
+  (send *robot* :torso :waist-r :joint-angle -5)
+  ;;(send *robot* :torso :waist-y :joint-angle 40)
+  
+  (send *robot* :rarm :collar-y :joint-angle 60)
+  (send *robot* :rarm :shoulder-y :joint-angle -30)
+  (send *robot* :rarm :shoulder-p :joint-angle 0)
+  (send *robot* :rarm :shoulder-r :joint-angle -60.0)
+  (send *robot* :rarm :elbow-p :joint-angle -80)
+  (send *robot* :rarm :wrist-y :joint-angle 0)
+  (send *robot* :rarm :wrist-p :joint-angle -20.0)
+  (send *robot* :rarm :wrist-r :joint-angle 40)
+
+  ;; (send *robot* :larm :shoulder-y :joint-angle -30)
+  ;; (send *robot* :larm :shoulder-p :joint-angle -20)
+  (send *robot* :larm :wrist-p :joint-angle 0)
+  (send *robot* :larm :wrist-r :joint-angle 5.90432)
+  (send *robot* :larm :wrist-y :joint-angle 14.7854)
+  (send *robot* :larm :collar-y :joint-angle -20)
+  (send *robot* :larm :shoulder-y :joint-angle -30)
+  (send *robot* :larm :shoulder-p :joint-angle 12.713)
+  (send *robot* :larm :shoulder-y :joint-angle 7.57822)
+  (send *robot* :larm :shoulder-r :joint-angle 18.2888)
+  (send *robot* :larm :elbow-p :joint-angle -88.4984)
+  
+  ;; (send *robot* :larm :shoulder-y :joint-angle -10)
+  ;; (send *robot* :larm :shoulder-p :joint-angle 10)
+  ;; (send *robot* :larm :shoulder-r :joint-angle 20)
+  ;; (send *robot* :larm :elbow-p :joint-angle -50)
+  ;; (send *robot* :larm :wrist-y :joint-angle 0)
+  ;; (send *robot* :larm :wrist-p :joint-angle -20.0)
+  ;; (send *robot* :larm :wrist-r :joint-angle 0.0)
+
+  (when run
+    (send *ri* :angle-vector (send *robot* :angle-vector) 10000)
+    (send *ri* :wait-interpolation)
+    )
+  )
+
+;; (defun posture ()
+;;   (lleg-foot)
+;;   (initial-pos)
+;;   (bed-knee)
+;;   (support)
+;;   (lower-waist)
+;;   (rarm-neck)
+;;   (wake)
+;;   )
 
 (defun reset-pose (&key(run t))
   (send *robot* :reset-pose)
@@ -134,15 +228,51 @@
   )
 
 (defun lower-waist
-    (&key (dz 100) (tm 5000) (run t))
+    (&key (dz 60) (tm 5000) (run t))
   (move-waist :dz dz :tm tm :run run) 
+  ;;(send *robot* :reset-pose)
+  ;; (send *robot* :fix-leg-to-coords (make-coords))
+  ;; (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
+  ;; (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
+  ;; (send *ri* :angle-vector (send *robot* :angle-vector) tm)
+  ;; (send *ri* :wait-interpolation)
+  ;; (send *robot* :newcoords (make-coords))
   )
 
 (defun start-pos (&key (run t))
+  ;; ;; (send *robot* :larm :shoulder-p :joint-angle 20)
+  ;; (send *robot* :larm :shoulder-p :joint-angle -10)
+  ;; (send *robot* :larm :collar-y :joint-angle -10)
+  ;; (send *robot* :larm :shoulder-y :joint-angle 10)
+  ;; (send *robot* :larm :elbow-p :joint-angle -70)
+
+  ;; (send *robot* :torso :waist-r :joint-angle 5)
+  ;; (send *robot* :torso :waist-p :joint-angle 20)
+
+  ;; (send *robot* :rarm :shoulder-p :joint-angle -40)
+  ;; (send *robot* :rarm :shoulder-r :joint-angle -30)
+  ;; (send *robot* :rarm :elbow-p :joint-angle -30)
+
+  ;; (send *robot* :rarm :collar-y :joint-angle 20)
+  
+  ;; ;; (arm-solve-ik :larm-trans-pos #f(0 0 100))
+  ;; (send *robot* :larm :wrist-y :joint-angle -40)
+  ;; (send *robot* :larm :wrist-r :joint-angle 40)
+  
+  ;; (send *robot* :rarm :wrist-r :joint-angle 60)
+  ;; (send *robot* :rarm :wrist-p :joint-angle -60)
+
+  ;; (send *robot* :fix-leg-to-coords (make-coords))
+  ;; ;;(send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
+
+  ;; (when run
+  ;;   (send *ri* :angle-vector (send *robot* :angle-vector) 5000)
+  ;;   (send *ri* :wait-interpolation)
+  ;;   )
   ;;pattern1
   (send *robot* :torso :waist-p :joint-angle 20)
-  (full-solve-ik-locate :rarm-trans-pos #f(650 -400 950) ;;950,830
-  			:larm-trans-pos #f(650 300 1200) ;;1200,1130  y250
+  (full-solve-ik-locate :rarm-trans-pos #f(650 -400 950)
+  			:larm-trans-pos #f(650 250 1200)
   			:rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:centroid 0.2) 
@@ -241,14 +371,13 @@
 (defun generate-circle-trajectory (&key (r-start-pos) (r-radius) (r-angle) (r-finish-angle) (l-start-pos) (l-radius) (l-angle) (l-finish-angle) (num-points) (mass))
   (setq *wrench-list* '())
   (setq grav 9.8)
-  (setq force_fit 30.0) ;;?
-  (setq force_adjust 30.0)
+  (setq force_fit 100.0) ;;?
   (let* ((r-center2hand (float-vector 0.0 (- 0.0 (* r-radius (cos r-angle))) (* r-radius (sin r-angle))))
 	 (r-center (v- r-start-pos r-center2hand))
 	 (l-center2hand (float-vector 0.0 (* l-radius (sin l-angle)) (* l-radius (cos l-angle))))
 	 (l-center (v- l-start-pos l-center2hand))
 	 (r-trajectory '())
-	 (l-trajectory '()))
+	 (l-trajectory '())) ;; 結果を蓄積するリスト
     ;; (setq c1 (make-cube 100 100 100))
     ;; (setq c2 (make-cube 100 100 100))
     ;; (send c1 :locate center :world)
@@ -285,27 +414,14 @@
 	(setq l-target-circle (float-vector 0.0 (* 1.4 (* l-radius (sin l-theta))) (* 1.0 (* l-radius (cos l-theta)))))
 	(setq l-circle (v+ l-center l-target-circle))  ;;larm
 
-	(setq r_force (+ (/ (* (* mass grav) (cos r-theta)) 2.0) force_adjust))
+	(setq r_force (/ (* (* mass grav) (cos r-theta)) 2.0))
 	;;(setq r_moment (* r_force (/ r-radius 1000)))
-	;; (setq r_fx (theta-3 :x1 0.0 :y1 0.0 :x2 (float num-points) :y2 -100 :index (float i)))
-	(cond ((> i (/ (* num-points 2) 3))
-	       (setq r_fx -40.0)
-	       )
-	      (t
-	       (setq r_fx (theta-3 :x1 0.0 :y1 0.0 :x2 (float (/ (* num-points 2) 3)) :y2 -40 :index (float i)))
-	       )
-	      )
-	(cond ((> r-theta (deg2rad 90))
-	       (setq r_fy force_adjust)
-	       )
-	      (t
-	       (setq r_fy (+ (* r_force (sin r-theta)) (* force_fit (cos r-theta))))
-	       )
-	      )
+	(setq r_fx 0.0)
+	(setq r_fy (+ (* r_force (sin r-theta)) (* force_fit (cos r-theta))))
 	(setq r_fz (- (* r_force (cos r-theta)) (* force_fit (sin r-theta))))
 	(setq r_fx (- r_fx))
 	(setq r_fy (- r_fy))
-	(setq r_fz (- r_fz))  ;;ロボットが受ける力
+	(setq r_fz (- r_fz))
 	;; (incf r_corr 0.5)
 	;; (when (< r_corr r_fy)
 	;;   (setq r_fy r_corr)
@@ -313,14 +429,13 @@
 	;; (when (< r_corr r_fz)
 	;;   (setq r_fz r_corr)
 	;;   )
-	;; (setq r_Mx (/ (- (* (aref r-circle 1) r_fz) (* (aref r-circle 2) r_fy)) 1000))
-	;; (setq r_Mx (/ (- (* (aref r-target-circle 1) r_fz) (* (aref r-target-circle 2) r_fy)) 1000))
-	(setq r_Mx 0.0)
+
+	(setq r_Mx (/ (- (* (aref r-target-circle 1) r_fz) (* (aref r-target-circle 2) r_fy)) 1000))
 	(setq r_My 0.0)
 	(setq r_Mz 0.0)
 	(setq r_wr (float-vector r_fx r_fy r_fz r_Mx r_My r_Mz))
 	;; (setq r_wr (transform (transform-matrix :rarm t) r_wr))
-	(setq l_force 25.0)
+	(setq l_force 50.0)
 	(setq l_fx 0.0)
 	(setq l_fy (- 0.0 (* l_force (sin l-theta))))
 	(setq l_fz (- 0.0 (* l_force (cos l-theta))))
@@ -366,7 +481,6 @@
     )
     (setq init-list-wr '())
     (dotimes (i init-num)
-      ;; (setq rx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 12) :index (float i)))
       (setq ry_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 13) :index (float i)))
       (setq rz_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 14) :index (float i)))
       (setq rmx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 15) :index (float i)))
@@ -444,8 +558,6 @@
   (setq diff (/ (- finish-value start-value) (- (length r_tra) 1)))
   (setq l-start 90.0)
   (setq l-diff (/ l-start (- (length r_tra) 1)))
-  (setq r-start 90.0)
-  (setq rhand-diff (/ 100.0 (- (length r_tra) 1)))
   (setq r-pitch -30.0)
   (setq r-yaw 30.0)
   ;; (setq r-pitch -50)
@@ -453,9 +565,9 @@
   (setq pitch-diff (/ l-diff 1))  ;1or2..
   (setq r-diff (* (/ l-diff 3) 2))
 
-  ;; (setq cop -0.1)
-  ;; (setq cop-diff (/ (- (- cop) cop) (length r_tra)))
-  ;; (setq cop-list '())
+  (setq cop -0.1)
+  (setq cop-diff (/ (- (- cop) cop) (length r_tra)))
+  (setq cop-list '())
   
   (setq *angle-list* '())
   (setq *time-list* '())
@@ -463,7 +575,6 @@
   ;; (dolist (target r_tra)
   (progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (start-pos :run nil))
   (setq init-angle (send *robot* :angle-vector))
-  ;; (setq init-angle (send *robot* :angle-vector (send *ri* :state :potentio-vector)))
   (dotimes (i (length r_tra))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
     (setq r_target (elt r_tra i))
@@ -476,7 +587,7 @@
     			  :larm-trans-pos l_target
     			  ;; :rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 0))
     			  ;; :rarm-rpy (float-vector (deg2rad 60) (deg2rad r-pitch) (deg2rad r-yaw)) ;;pattern2
-    			  :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-start))  ;;pattern1
+    			  :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))  ;;pattern1
     			  :larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad l-start))
     			  :centroid start-value)
     ;; (full-link6-ik-locate :rarm-trans-pos r_target
@@ -493,12 +604,11 @@
     (setq start-value (+ start-value diff))
     ;;(setq r-angle (- r-angle same-angle))
     (setq l-start (- l-start l-diff))
-    (setq r-start (- r-start rhand-diff))
     (setq r-pitch (+ r-pitch pitch-diff))
     (setq r-yaw (- r-yaw r-diff))
 
-    ;; (push cop cop-list)
-    ;; (setq cop (+ cop cop-diff))
+    (push cop cop-list)
+    (setq cop (+ cop cop-diff))
     
     (setq position (send *robot* :angle-vector))
     (cond ((> (length *angle-list*) 0)
@@ -516,7 +626,7 @@
   ;;   (setq a (- a 0.018))
   ;;   )
 
-  ;;(nreverse cop-list)
+  (nreverse cop-list)
   
   (dotimes (i init-num)
     (push init-angle *angle-list*)
@@ -526,13 +636,8 @@
   (when run
     (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
-    (format t "enter~%")
-    (read-line)
-    (send *ri* :start-log)
-    (send *ri* :wait-interpolation)
     (send *ri* :angle-vector-sequence-full *angle-list* *time-list* :wrench *wrench-list*)
     (send *ri* :change-cop 0.0 0.1 0.0 0.1 12.0)  ;; default rleg_x 0.0 rleg_y 0.02 lleg_x 0.0 lleg_y -0.02 t 2.0
-    
     ;; (send *ri* :set-auto-stabilizer-param :default-zmp-offsets (list #f(0 0.02) #f(0 -0.02)))
     ;; (unix:sleep 0.5)
     ;; (send *ri* :set-auto-stabilizer-param :default-zmp-offsets (list #f(0 0.02) #f(0 -0.02)))
@@ -543,7 +648,7 @@
 
 (defun wake (&rest args)  
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
-  (setq tra (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos) :r-radius 500.0 :r-angle (deg2rad 0) :r-finish-angle (deg2rad 100) :l-start-pos (send *robot* :larm :end-coords :worldpos) :l-radius 200.0 :l-angle (deg2rad 0) :l-finish-angle (deg2rad 90) :num-points 5000 :mass 15.0))
+  (setq tra (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos) :r-radius 500.0 :r-angle (deg2rad 0) :r-finish-angle (deg2rad 90) :l-start-pos (send *robot* :larm :end-coords :worldpos) :l-radius 200.0 :l-angle (deg2rad 0) :l-finish-angle (deg2rad 90) :num-points 5000 :mass 20.0))
   (apply #'follow-circle (append args (list :r_tra (elt tra 0) :l_tra (elt tra 1))))  ;;larm200or275
   )
 
@@ -551,14 +656,14 @@
   (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
 	:K-p 500.0 :D-p 1000.0 :M-p 5)  ;;default :K-p 500.0 :D-p 1000.0 :M-p 5
   (send *ri* :start-impedance :arms)
-  (send *ri* :set-ref-forces
-  	(list
-  	 (float-vector 0 0 0) ;;rleg
-  	 (float-vector 0 0 0) ;;lleg
-  	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
-  	 (float-vector 0 0 0) ;;larm
-  	 )
-  	3000)
+  ;; (send *ri* :set-ref-forces
+  ;; 	(list
+  ;; 	 (float-vector 0 0 0) ;;rleg
+  ;; 	 (float-vector 0 0 0) ;;lleg
+  ;; 	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
+  ;; 	 (float-vector 0 0 0) ;;larm
+  ;; 	 )
+  ;; 	3000)
   )
 
 (defun angle-drawplot (&key (list *angle-list*) (num 14)) ;;torso-y 14 ;;rarm-wrist-p 24 ;;rarm-wrist-r 23 ;;rarm-wrist-y 22
@@ -606,18 +711,91 @@
   (objects (list *robot* target-coords move-target-coords))
   )
 
+;;(send *ri* :stop-impedance :larm)
+;;progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (start-pos :run nil) (wake)
+;;progn (reset-pose) (lleg-foot :run nil) (send *ri* :angle-vector (send *robot* :angle-vector) 5000) (lower-waist) (start-pos) (wake :run t)
+;;;;;;;;;;;;
+
+;; (defun test-motion ()
+;;   (send *robot* :reset-pose)
+;;   (lleg-foot)
+;;   (initial-pos)
+;;   (bed-knee)
+;;   (support)
+;;   (lower-waist)
+;;   (rarm-neck)
+;;   (let ((traj (generate-circle-trajectory (v+ #f(0 200 0) (send *robot* :rarm :end-coords :worldpos)) 200 10)))
+;;     (dolist (pos traj)
+;;       (setq cube (make-cube 100 100 100))
+;;       (send cube :translate pos)
+;;       (full-solve-ik-locate :rarm-trans-pos pos)
+;;       (objects (list *robot* cube))
+;;       (send *ri* :angle-vector (send *robot* :angle-vector))
+;;       (send *ri* :wait-interpolation)
+;;       (read-line)
+;;       )
+;;     )
+;;   )
+
+;; (defun rotation-matrix-to-rpy (rot-matrix)
+;;   (let* ((r11 (aref rot-matrix 0 0))
+;;          (r12 (aref rot-matrix 0 1))
+;;          (r13 (aref rot-matrix 0 2))
+;;          (r21 (aref rot-matrix 1 0))
+;;          (r22 (aref rot-matrix 1 1))
+;;          (r23 (aref rot-matrix 1 2))
+;;          (r31 (aref rot-matrix 2 0))
+;;          (r32 (aref rot-matrix 2 1))
+;;          (r33 (aref rot-matrix 2 2))
+;;          (yaw (atan2 r21 r11))
+;;          (pitch (atan2 (- r31) (sqrt (+ (* r11 r11) (* r21 r21)))))
+;;          (roll (atan2 r32 r33)))
+;;     (list yaw pitch roll)))
+
+;; (defun full-link6-ik-locate
+;;     (&key(rarm-trans-pos (send *robot* :rarm_link6_lk :worldpos))
+;; 	 (larm-trans-pos (send *robot* :larm :end-coords :worldpos))
+;; 	 (rarm-rpy (rotation-matrix-to-rpy (send *robot* :rarm_link6_lk :worldrot)))
+;; 	 (larm-rpy (rotation-matrix-to-rpy (send *robot* :larm :end-coords :worldrot)))
+;; 	 (centroid 0.5))
+;;   (let* ((rleg-coords (send *robot* :rleg :end-coords :copy-worldcoords))
+;; 	 (lleg-coords (send *robot* :lleg :end-coords :copy-worldcoords))
+;; 	 (rarm-link6-coords (send *robot* :rarm_link6_lk :copy-worldcoords))
+;; 	 (larm-link6-coords (send *robot* :larm :end-coords :copy-worldcoords))
+;; 	 (rarm-translation-coords (send rarm-link6-coords :locate rarm-trans-pos :world) :copy-worldcoords)
+;; 	 (larm-translation-coords (send larm-link6-coords :locate larm-trans-pos :world) :copy-worldcoords)
+;; 	 (rarm-target (make-coords :pos (send rarm-translation-coords :pos)
+;; 				   :rpy rarm-rpy))
+;; 	 (larm-target (make-coords :pos (send larm-translation-coords :pos)
+;; 				   :rpy larm-rpy)))
+;;     (send *robot* :fullbody-inverse-kinematics
+;; 	  (list rleg-coords lleg-coords rarm-target larm-target)
+;; 	  :move-target (list (send *robot* :rleg :end-coords)
+;; 			     (send *robot* :lleg :end-coords)
+;; 			     (send *robot* :rarm_link6_lk)
+;; 			     (send *robot* :larm :end-coords))
+;; 	  :link-list (list (send *robot* :link-list (send *robot* :rleg :end-coords :parent))
+;; 			   (send *robot* :link-list (send *robot* :lleg :end-coords :parent))
+;; 			   (send *robot* :link-list (send *robot* :rarm :end-coords :parent))
+;; 			   (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
+;; 	  :translation-axis (list t t t t) 
+;; 	  ;; :rotation-axis (list t t nil nil)
+;; 	  ;; :rotation-axis (list t t t nil)
+;; 	  :rotation-axis (list t t t t)
+;; 	  :target-centroid-pos (midpoint centroid
+;; 	  				 (send *robot* :rleg :end-coords :worldpos)
+;; 	  				 (send *robot* :lleg :end-coords :worldpos))
+;; 	  :cog-translation-axis :z
+	  
+	  
+;; 	  )
+;;     )
+;;   )
+
 ;;progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (start-pos :run nil)
 
 ;;progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil)
 ;;irt-ri
-
-
 ;;send *ri* :start-auto-balancer
-;;lleg-foot
-;;lower-waist
 ;;start-pos
-;;impendance
-;;下ろす
-;;send *ri* :set-auto-stabilizer-param :is-emergency-step-mode nil
-;;send *ri* :start-st
 ;;wake :run t

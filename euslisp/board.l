@@ -220,6 +220,8 @@
   (send *robot* :rarm :wrist-p :joint-angle -40)
   (send *robot* :larm :wrist-p :joint-angle 0)
   (when run
+    (send *ri* :change-cop 0.0 -0.25 0.0 -0.25 5.0)
+    (send *ri* :wait-interpolation)
     (send *ri* :angle-vector (send *robot* :angle-vector) 10000)
     (send *ri* :wait-interpolation)
     )
@@ -228,15 +230,15 @@
 (defun impedance ()
   (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
 	:K-p 500.0 :D-p 1000.0 :M-p 5)
-  (send *ri* :start-impedance :rarm)
-  (send *ri* :set-ref-forces
-	(list
-	 (float-vector 0 0 0) ;;rleg
-	 (float-vector 0 0 0) ;;lleg
-	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
-	 (float-vector 0 0 0) ;;larm
-	 )
-	3000)
+  (send *ri* :start-impedance :arms)
+  ;; (send *ri* :set-ref-forces
+  ;; 	(list
+  ;; 	 (float-vector 0 0 0) ;;rleg
+  ;; 	 (float-vector 0 0 0) ;;lleg
+  ;; 	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
+  ;; 	 (float-vector 0 0 0) ;;larm
+  ;; 	 )
+  ;; 	3000)
   )
 
 (defun all ()
@@ -248,12 +250,31 @@
   (rotate :run t)
   )
 
+(defun theta-3 (&key (x1) (y1) (x2) (y2) (index))
+  (setq mat (matrix (list (expt x1 3) (expt x1 2) x1 1)
+		    (list (expt x2 3) (expt x2 2) x2 1)
+		    (list (* 3 (expt x1 2)) (* 2 x1) 1 0)
+		    (list (* 3 (expt x2 2)) (* 2 x2) 1 0)
+		    ))
+  (setq vec (float-vector y1 y2 0 0))
+  (setq coeffs (transform (inverse-matrix mat) vec))
+  (setq ax3 (* (aref coeffs 0) (expt index 3)))
+  (setq bx2 (* (aref coeffs 1) (expt index 2)))
+  (setq cx (* (aref coeffs 2) index))
+  (setq d (aref coeffs 3))
+  (setq y (+ ax3 bx2 cx d))
+  y
+  )
+
+(defvar *r-theta-list* '())
+(defvar *l-theta-list* '())
+(setq init-num 1000)
 (defvar *wrench-list* '())
-(defun generate-circle-trajectory (&key (r-start-pos) (r-angle) (r-height) (l-start-pos) (l-angle) (l-height) (num-points))
+(defun generate-circle-trajectory (&key (r-start-pos) (r-angle) (r-finish-angle) (r-height) (l-start-pos) (l-angle) (l-finish-angle) (l-height) (num-points) (mass))
   (setq *wrench-list* '())
-  (setq mass 20.0)
+  (setq myu 0.5)
   (setq grav 9.8)
-  (setq force_fit 100.0) ;;?
+  (setq force_fit 30.0) ;;?
   (let* (;; (r-center2hand (float-vector (aref (send *robot* :rarm :end-coords :worldpos) 0) (aref (send *robot* :rarm :end-coords :worldpos) 1) 0.0))
 	 ;; (r-center (v- r-start-pos r-center2hand))
 	 (r-center (float-vector (aref (send *robot* :chest_link0_lk :worldpos) 0) (aref (send *robot* :chest_link0_lk :worldpos) 1) (aref (send *robot* :rarm :end-coords :worldpos) 2)))
@@ -273,20 +294,36 @@
 	 ;; (setq ini-theta (atan (aref (send *robot* :larm :end-coords :worldpos) 0) (aref (send *robot* :larm :end-coords :worldpos) 1)))
 	 (l-ini-theta (atan (aref l-center2hand 0) (aref l-center2hand 1)))
 	 ;;(setq theta-step (/ (- (/ pi 2) angle) num-points))
-	 (r-theta-step (/ (- (deg2rad 60) r-angle) num-points))  ;;60or90
-	 (l-theta-step (/ (- (deg2rad 60) l-angle) num-points))  ;;60or90
+	 ;; (r-theta-step (/ (- (deg2rad 60) r-angle) num-points))  ;;60or90
+	 ;; (l-theta-step (/ (- (deg2rad 60) l-angle) num-points))  ;;60or90
 	 (r-trajectory '())
 	 (l-trajectory '()))
     ;; (setq c1 (make-cube 100 100 100))
     ;; (setq c2 (make-cube 100 100 100))
     ;; (send c1 :locate center :world)
+    (setq *r-theta-list* '())
+    (setq *l-theta-list* '())
     (dotimes (i (+ num-points 1))
       ;; (print "Enter to next")(read-line)
-      (let ((r-theta (* i r-theta-step)) (l-theta (* i l-theta-step)) (r-diff-z (* i r-diff-z)) (l-diff-z (* i l-diff-z)))
+      (let ((r-theta (theta-3 :x1 0.0
+			      :y1 r-angle
+			      :x2 (float num-points)
+			      :y2 r-finish-angle
+			      :index (float i)))
+	    (l-theta (theta-3 :x1 0.0
+			      :y1 l-angle
+			      :x2 (float num-points)
+			      :y2 l-finish-angle
+			      :index (float i)))
+	    (r-diff-z (* i r-diff-z)) (l-diff-z (* i l-diff-z)))
+	
 	(setq r-theta (- r-ini-theta r-theta))
 	(setq l-theta (- l-ini-theta l-theta))
 	;; (setq theta (+ theta angle))
 
+	(push r-theta *r-theta-list*)
+	(push l-theta *l-theta-list*)
+	
 	(setq r-target-circle (float-vector (* 1.0 (* r-radius (sin r-theta))) (* 1.0 (* r-radius (cos r-theta))) (- 0.0 r-diff-z)))
 	(setq r-circle (v+ r-center r-target-circle))
 	;;(setq r-circle (v+ (send r-center :pos) (send r-target-circle :pos)));;rarm
@@ -295,23 +332,31 @@
 	(setq l-circle (v+ l-center l-target-circle))
 	;;(setq l-circle (v+ (send l-center :pos) (send l-target-circle :pos)))  ;;larm
 
-	(setq r_force (/ (* (* mass grav) (cos r-theta)) 2.0))
-	(setq r_moment (* r_force r-radius))
-	(setq r_fx 0.0)
-	(setq r_fy (+ (* r_force (sin r-theta)) (* force_fit (cos r-theta))))
-	(setq r_fz (- (* r_force (cos r-theta)) (* force_fit (sin r-theta))))
-	(setq r_Mx 0)
-	(setq r_My (* r_moment (sin r-theta)))
-	(setq r_Mz (* r_moment (cos r-theta)))
-	(setq r_wr (list r_fx r_fy r_fz r_Mx r_My r_Mz))
+	(setq r_force (* myu mass grav))
+	;;(setq r_moment (* r_force (/ r-radius 1000)))
+	(setq r_fx (* r_force (cos (- pi r-theta))))
+	(setq r_fy (* r_force (sin (- pi r-theta))))
+	(setq r_fz 0.0)
+	(setq r_fx (- r_fx))
+	(setq r_fy (- r_fy))
+	(setq r_fz (- r_fz))
+	
+	(setq r_Mx 0.0)
+	(setq r_My 0.0)
+	;; (setq r_Mz (/ (- (* (aref r-target-circle 0) r_fy) (* (aref r-target-circle 1) r_fx)) 1000))
+	(setq r_Mz 0.0)
+	(setq r_wr (float-vector r_fx r_fy r_fz r_Mx r_My r_Mz))
 	(setq l_force 50.0)
-	(setq l_fx 0.0)
+	(setq l_fx (* l_force (cos l-theta)))
 	(setq l_fy (- 0.0 (* l_force (sin l-theta))))
-	(setq l_fz (- 0.0 (* l_force (cos l-theta))))
-	(setq l_wr (list l_fx l_fy l_fz 0.0 0.0 0.0))
-	(setq rl_wr (list 0.0 0.0 0.0 0.0 0.0 0.0))
-	(setq ll_wr (list 0.0 0.0 0.0 0.0 0.0 0.0))
-	(setq wr (append r_wr l_wr rl_wr ll_wr))
+	(setq l_fz 0.0)
+	(setq l_fx (- l_fx))
+	(setq l_fy (- l_fy))
+	(setq l_fz (- l_fz))
+	(setq l_wr (float-vector l_fx l_fy l_fz 0.0 0.0 0.0))
+	(setq rl_wr (float-vector 0.0 0.0 0.0 0.0 0.0 0.0))
+	(setq ll_wr (float-vector 0.0 0.0 0.0 0.0 0.0 0.0))
+	(setq wr (concatenate float-vector rl_wr ll_wr r_wr l_wr))
 	(cond ((> (length *wrench-list*) 0)
 	       (nconc *wrench-list* (list wr))
 	       )
@@ -339,6 +384,22 @@
 	     )
 	    )
       )
+    (nreverse *r-theta-list*)
+    (nreverse *l-theta-list*)
+    
+    (setq init-list-wr '())
+    (dotimes (i init-num)
+      (setq rx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 12) :index (float i)))
+      (setq ry_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 13) :index (float i)))
+      (setq rmz_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 17) :index (float i)))
+      (setq lx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 18) :index (float i)))
+      (setq ly_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 19) :index (float i)))
+      (setq init-wr (float-vector 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 rx_corr ry_corr 0.0 0.0 0.0 rmz_corr lx_corr ly_corr 0.0 0.0 0.0 0.0))
+      (push init-wr init-list-wr)
+      )
+    (nreverse init-list-wr)
+    (setq *wrench-list* (append init-list-wr *wrench-list*))
+    
     (setq trajectory '())
     (push l-trajectory trajectory) ;; elt trajectory 1
     (push r-trajectory trajectory) ;; elt trajectory 0
@@ -360,6 +421,9 @@
   ;; (setq hand-diff (/ 90 (- (length r_tra) 1)))
   (setq hand-diff (/ 70.0 (- (length r_tra) 1)))  ;;70
   (setq l-hand-diff (/ 20.0 (- (length l_tra) 1)))
+
+  (progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (posture :run nil))
+  (setq init-angle (send *robot* :angle-vector))
   (dotimes (i (length r_tra))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
     (setq r_target (elt r_tra i))
@@ -396,17 +460,24 @@
   ;;(format t "time-list: ~A~%" *time-list*)
   ;;angle-list
   ;;time-list
+
+  (dotimes (i init-num)
+    (push init-angle *angle-list*)
+    (push 2.0 *time-list*)
+    )
+  
   (when run
     (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
-    (send *ri* :angle-vector-sequence-full *angle-list* *time-list*)
+    (send *ri* :angle-vector-sequence-full *angle-list* *time-list* :wrench *wrench-list*)
+    (send *ri* :change-cop -0.03 0.18 -0.03 0.18 12.0)
     (send *ri* :wait-interpolation)
     )
   )
 
 
 (defun rotate (&rest args)
-  (setq tra (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos) :r-angle (deg2rad 0) :r-height 50.0 :l-start-pos (send *robot* :larm :end-coords :worldpos) :l-angle (deg2rad 0) :l-height 50.0 :num-points 5000))
+  (setq tra (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos) :r-angle (deg2rad 0) :r-finish-angle (deg2rad 60) :r-height 50.0 :l-start-pos (send *robot* :larm :end-coords :worldpos) :l-angle (deg2rad 0) :l-finish-angle (deg2rad 60) :l-height 50.0 :num-points 5000 :mass 25.0))
   (apply #'follow-circle (append args (list :r_tra (elt tra 0) :l_tra (elt tra 1))))
   )
 
@@ -434,7 +505,7 @@
   (send a :draw b)
   )
 
-(defun wrench-drawplot (&key (list *wrench-list*) (num 1))
+(defun wrench-drawplot (&key (list *wrench-list*) (num 12))
   (setq a (gnuplot))
   (setq b '())
   (dotimes (i (length list))
