@@ -1,0 +1,24 @@
+roscd auto_stabilizer/rtc/auto_stabilizer
+em AutoStabilizer.h
+public:
+	bool changeCop();
+
+em AutoStabilizer.cpp
+bool AutoStabilizer::changeCop(){}  
+
+em AutoStabilizerService_impl.h
+CORBA::Boolean changeCop();
+
+em AutoStabilizerService_impl.cpp
+CORBA::Boolean AutoStabilizerService_impl::changeCop(){}
+
+idl/AutoStabilizerService.idl
+boolean changeCop
+
+em /euslisp/auto-stabilizer-interface.l
+(:change-cop)
+
+Serviceを編集したらsrcgen/ src/をrm -rfで消してcatkin clean auto_stabilizer
+catkin bt --no-deps
+
+Autostabilizer.cpp execAutoStabilizerでstd::cerr << gait.param.copOffset[0].value() <<std::endlでhrpsysにログが出る

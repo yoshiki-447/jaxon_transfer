@@ -1,0 +1,19 @@
+roscd auto_stabilizer/rtc/auto_stabilizer
+em AutoStabilizer.h
+public:
+	bool changeCop();
+
+em AutoStabilizer.cpp
+bool AutoStabilizer::changeCop(){}  
+
+em AutoStabilizerService_impl.h
+CORBA::Boolean changeCop();
+
+em AutoStabilizerService_impl.cpp
+CORBA::Boolean AutoStabilizerService_impl::changeCop(){}
+
+em /euslisp/auto-stabilizer-interface.l
+(:change-cop)
+
+Serviceを編集したらsrcgen/ src/をrm -rfで消してcatkin clean auto_stabilizer
+catkin bt --no-deps

@@ -76,7 +76,6 @@ setq a (gnuplot)
 setq b listをつくる
 send a :draw b
 
-
 send *ri* :set-interpolation-mode :linear
 
 rosbag playしてrvizに反映
@@ -84,3 +83,13 @@ rosrun rqt_plot rqt_plot topic選んで値をグラフにする
 
 send *ri* :state :reference-force-vector
 send *ri* :state :reference-moment-vector
+
+M-x xml-mode
+
+(list (apply #'concatenate cons (flatten (mapcar #'(lambda (f m) (list f m)) (send *ri* :state :reference-force-vector) (send *ri* :state :reference-moment-vector)))))
+
+send *robot* :rarm :end-coords :draw-on :size 100 :flush t
+
+pkill -9 choreonoid
+
+hand,legsensorを抜いて起動し直したときはrmfoし直す

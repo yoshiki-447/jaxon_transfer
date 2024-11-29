@@ -29,3 +29,5 @@ scriptタブでhcf.servoOff()
 
 jaxonの裏側の基盤はふれたら死ぬ
 緊急停止ボタンを外して75Vがついていない場合はすぐ緊急停止ボタンを押す（電流は流れるから？）
+
+sudo shutdown -h now

@@ -223,3 +223,31 @@ ast_tau -> real simulation arm leg torso
         #
 
 start-jaxon_red_with_mslhand-sim.sh->hrpsys_JAXON_RED_WITH_MSLHAND.launch->jaxon_red_with_mslhand_setup.py->auto_stabilizer_setup.py
+
+
+
+//sh_()sensorOut
+
+hrpsys/rtc/StateHolder/StateHolder.cpp
+m_wrenchOutはfsensor_namesから値を受けている
+m_wrenchesOut[i] = new OutPort<TimedDoubleSeq>(std::string(fsensor_names[i]+"Out").c_str(), m_wrenches[i]);
+
+hrpsys/rtc/StateHolder/StateHolder.h
+<TimedDoubleSeq> *> m_wrenchesOut;
+
+rtm-ros-robotics/rtmros_common/hrpsys_ros_bridge/euslisp/datalogger_log_parser.l
+sh_[sensorname]Out
+
+//書くところ
+auto_stabilizer/src/auto_stabilizer_config/auto_stabilizer_setup.py
+self.log_svc.add("TimedDoubleSeq","sh_rhsensorOut")
+        rtm.connectPorts(rtm.findRTC("sh").port("rhsensorOut"),rtm.findRTC("log").port("sh_rhsensorOut"))
+
+sh_rhsensorOutは合わせる,logに出力する名
+shはStateHolderの略 hrpsys.launchに記述してある Ctrl-s serialize
+
+log_plotter/config/wrench-arm_layout.yaml
+force,moment
+- { key: sh_rhsensorOut, id: [0-2] }                                                                                            
+- { key: sh_lhsensorOut, id: [0-2] }
+
