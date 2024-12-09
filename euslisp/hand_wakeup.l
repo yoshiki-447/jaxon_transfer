@@ -186,6 +186,26 @@
   y
   )
 
+(defun minimum-leap (&key (x1) (y1) (x2) (y2) (index))
+  (setq mat (matrix (list (expt x1 5) (expt x1 4) (expt x1 3) (expt x1 2) x1 1)
+		    (list (expt x2 5) (expt x2 4) (expt x2 3) (expt x2 2) x2 1)
+		    (list (* 5 (expt x1 4)) (* 4 (expt x1 3)) (* 3 (expt x1 2)) (* 2 x1) 1 0)
+		    (list (* 5 (expt x2 4)) (* 4 (expt x2 3)) (* 3 (expt x2 2)) (* 2 x2) 1 0)
+		    (list (* 20 (expt x1 3)) (* 12 (expt x1 2)) (* 6 x1) 2 0 0)
+		    (list (* 20 (expt x2 3)) (* 12 (expt x2 2)) (* 6 x2) 2 0 0)
+		    ))
+  (setq vec (float-vector y1 y2 0.0 0.0 0.0 0.0))  ;;位置、速度、加速度
+  (setq coeffs (transform (inverse-matrix mat) vec))
+  (setq ax5 (* (aref coeffs 0) (expt index 5)))
+  (setq bx4 (* (aref coeffs 1) (expt index 4)))
+  (setq cx3 (* (aref coeffs 2) (expt index 3)))
+  (setq dx2 (* (aref coeffs 3) (expt index 2)))
+  (setq ex (* (aref coeffs 4) index))
+  (setq f (aref coeffs 5))
+  (setq y (+ ax5 bx4 cx3 dx2 ex f))
+  y
+  )
+
 (defun vector-to-matrix (vec)
   (let ((vx (aref vec 0))
 	(vy (aref vec 1))
@@ -242,7 +262,7 @@
   (setq *wrench-list* '())
   (setq grav 9.8)
   (setq force_fit 30.0) ;;?
-  (setq force_adjust 30.0)
+  (setq force_adjust 50.0)
   (let* ((r-center2hand (float-vector 0.0 (- 0.0 (* r-radius (cos r-angle))) (* r-radius (sin r-angle))))
 	 (r-center (v- r-start-pos r-center2hand))
 	 (l-center2hand (float-vector 0.0 (* l-radius (sin l-angle)) (* l-radius (cos l-angle))))
@@ -264,13 +284,13 @@
       ;; 			      :index i
       ;; 			      :c (+ (/ (- finish-angle angle) 2.0) angle)
       ;; 			      )))
-      (let ((r-theta (theta-3 :x1 0.0
+      (let ((r-theta (minimum-leap :x1 0.0
 			      :y1 r-angle
 			      :x2 (float num-points)
 			      :y2 r-finish-angle
 			      :index (float i)
 			      ))
-	    (l-theta (theta-3 :x1 0.0
+	    (l-theta (minimum-leap :x1 0.0
 			      :y1 l-angle
 			      :x2 (float num-points)
 			      :y2 l-finish-angle
@@ -285,17 +305,17 @@
 	(setq l-target-circle (float-vector 0.0 (* 1.4 (* l-radius (sin l-theta))) (* 1.0 (* l-radius (cos l-theta)))))
 	(setq l-circle (v+ l-center l-target-circle))  ;;larm
 
-	(setq r_force (+ (/ (* (* mass grav) (cos r-theta)) 2.0) force_adjust))
+	(setq r_force (/ (* (* mass grav) (cos r-theta)) 2.0))
 	;;(setq r_moment (* r_force (/ r-radius 1000)))
 	;; (setq r_fx (theta-3 :x1 0.0 :y1 0.0 :x2 (float num-points) :y2 -100 :index (float i)))
 	(cond ((> i (/ (* num-points 2) 3))
-	       (setq r_fx -40.0)
+	       (setq r_fx -30.0)
 	       )
 	      (t
-	       (setq r_fx (theta-3 :x1 0.0 :y1 0.0 :x2 (float (/ (* num-points 2) 3)) :y2 -40 :index (float i)))
+	       (setq r_fx (minimum-leap :x1 0.0 :y1 0.0 :x2 (float (/ (* num-points 2) 3)) :y2 -30.0 :index (float i)))
 	       )
 	      )
-	(cond ((> r-theta (deg2rad 90))
+	(cond ((and (> i 2000) (>= r_fy (- force_adjust)))
 	       (setq r_fy force_adjust)
 	       )
 	      (t
@@ -366,11 +386,11 @@
     )
     (setq init-list-wr '())
     (dotimes (i init-num)
-      ;; (setq rx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 12) :index (float i)))
-      (setq ry_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 13) :index (float i)))
-      (setq rz_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 14) :index (float i)))
-      (setq rmx_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 15) :index (float i)))
-      (setq lz_corr (theta-3 :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 20) :index (float i)))
+      ;; (setq rx_corr (minimum-leap :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 12) :index (float i)))
+      (setq ry_corr (minimum-leap :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 13) :index (float i)))
+      (setq rz_corr (minimum-leap :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 14) :index (float i)))
+      (setq rmx_corr (minimum-leap :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 15) :index (float i)))
+      (setq lz_corr (minimum-leap :x1 0.0 :y1 0.0 :x2 (float init-num) :y2 (elt (car *wrench-list*) 20) :index (float i)))
       (setq init-wr (float-vector 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ry_corr rz_corr rmx_corr 0.0 0.0 0.0 0.0 lz_corr 0.0 0.0 0.0))
       (push init-wr init-list-wr)
       )
@@ -442,16 +462,16 @@
   (setq start-value 0.2)
   (setq finish-value 0.8)
   (setq diff (/ (- finish-value start-value) (- (length r_tra) 1)))
-  (setq l-start 90.0)
-  (setq l-diff (/ l-start (- (length r_tra) 1)))
-  (setq r-start 90.0)
-  (setq rhand-diff (/ 100.0 (- (length r_tra) 1)))
-  (setq r-pitch -30.0)
-  (setq r-yaw 30.0)
+  ;; (setq l-start 90.0)
+  ;; (setq l-diff (/ l-start (- (length r_tra) 1)))
+  ;; (setq r-start 90.0)
+  ;; (setq rhand-diff (/ 100.0 (- (length r_tra) 1)))
+  ;; (setq r-pitch -30.0)
+  ;; (setq r-yaw 30.0)
   ;; (setq r-pitch -50)
   ;; (setq r-yaw 42)
-  (setq pitch-diff (/ l-diff 1))  ;1or2..
-  (setq r-diff (* (/ l-diff 3) 2))
+  ;; (setq pitch-diff (/ l-diff 1))  ;1or2..
+  ;; (setq r-diff (* (/ l-diff 3) 2))
 
   ;; (setq cop -0.1)
   ;; (setq cop-diff (/ (- (- cop) cop) (length r_tra)))
@@ -472,6 +492,16 @@
     ;; (send *robot* :angle-vector #f(3.09242 -6.86101 -43.9995 56.6436 -15.467 0.272271 3.67336 4.96019 -36.3772 44.6703 -11.1064 -11.5631 8.46561 24.3388 16.4479 0.0 0.0 46.1851 5.25702 -76.4537 -12.7614 -28.6211 -37.8201 70.1417 -65.2121 -28.4953 -6.69292 29.8917 15.5053 -88.4715 -46.2998 13.644 -2.36926 0.0 90.0 0.0 0.0 0.0 0.0 0.0 90.0 0.0 0.0 0.0 0.0))
     ;; (send *robot* :fix-leg-to-coords (make-coords))
     ;; (send *robot* :angle-vector init-angle)
+    (setq r-start (minimum-leap :x1 0.0
+			 :y1 90.0
+			 :x2 (- (length r_tra) 1)
+			 :y2 -10.0
+			 :index (float i)))
+    (setq l-start (minimum-leap :x1 0.0
+			 :y1 90.0
+			 :x2 (- (length r_tra) 1)
+			 :y2 0.0
+			 :index (float i)))
     (full-solve-ik-locate :rarm-trans-pos r_target
     			  :larm-trans-pos l_target
     			  ;; :rarm-rpy (float-vector (deg2rad 60) (deg2rad -30) (deg2rad 0))
@@ -492,10 +522,10 @@
     ;;   (send *ri* :wait-interpolation))
     (setq start-value (+ start-value diff))
     ;;(setq r-angle (- r-angle same-angle))
-    (setq l-start (- l-start l-diff))
-    (setq r-start (- r-start rhand-diff))
-    (setq r-pitch (+ r-pitch pitch-diff))
-    (setq r-yaw (- r-yaw r-diff))
+    ;; (setq l-start (- l-start l-diff))
+    ;; (setq r-start (- r-start rhand-diff))
+    ;; (setq r-pitch (+ r-pitch pitch-diff))
+    ;; (setq r-yaw (- r-yaw r-diff))
 
     ;; (push cop cop-list)
     ;; (setq cop (+ cop cop-diff))
