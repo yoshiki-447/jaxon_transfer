@@ -5,7 +5,7 @@
 	 (larm-trans-pos #f(0 0 0))
 	 (rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0)))
 	 (larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 0))))
-  (let* ((rarm-end-coords (send *robot* :rarm :end-coords :copy-worldcoords))
+ (let* ((rarm-end-coords (send *robot* :rarm :end-coords :copy-worldcoords))
 	 (larm-end-coords (send *robot* :larm :end-coords :copy-worldcoords))
 	 (rarm-translation-coords (send rarm-end-coords :translate rarm-trans-pos :world) :copy-worldcoords)
 	 (larm-translation-coords (send larm-end-coords :translate larm-trans-pos :world) :copy-worldcoords)
@@ -454,7 +454,7 @@
     )
   )
 
-(defvar *angle-list* '())
+(defvar *angle-list '())
 (defvar *time-list* '())
 (defun follow-circle (&key (r_tra nil) (l_tra nil) (run nil) &allow-other-keys)
   ;;(setq r-angle 60)
@@ -549,7 +549,8 @@
   ;;(nreverse cop-list)
   
   (dotimes (i init-num)
-    (push init-angle *angle-list*)
+    ;; (push init-angle *angle-list*)
+    (push (car *angle-list*) *angle-list*)
     (push 2.0 *time-list*)
     )
   
