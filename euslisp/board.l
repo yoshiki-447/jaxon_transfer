@@ -1,4 +1,4 @@
-(load "package://eus_prioritized_inverse_kinematics/euslisp/prioritized-inverse-kinematics-compiled.l")
+;; (load "package://eus_prioritized_inverse_kinematics/euslisp/prioritized-inverse-kinematics-compiled.l")
 
 (defun arm-solve-ik
     (&key(rarm-trans-pos #f(0 0 0))

@@ -94,3 +94,9 @@ send *robot* :rarm :end-coords :draw-on :size 100 :flush t
 pkill -9 choreonoid
 
 hand,legsensorを抜いて起動し直したときはrmfoし直す
+
+y-or-n-p
+
+send *ri* :get-auto-stabilizer-param-arguments
+
+send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :data 
