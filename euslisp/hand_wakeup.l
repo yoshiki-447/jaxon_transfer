@@ -145,24 +145,24 @@
   )
 
 (defun lower-waist
-    (&key (dz 60) (tm 5000) (run t))  ;;100
+    (&key (dz 100) (tm 5000) (run t))  ;;100
   (move-waist :dz dz :tm tm :run run) 
   )
 
 (defun start-pos (&key (run t))
-  (full-solve-ik-locate :rarm-trans-pos #f(650 -500 900) ;;950,830
-  			:larm-trans-pos #f(650 200 1150) ;;1200,1130  y250
-  			:rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
-  			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
-  			:centroid 0.2
-			)
-  ;;pattern1
-  ;; (send *robot* :torso :waist-p :joint-angle 20)
-  ;; (full-solve-ik-locate :rarm-trans-pos #f(650 -400 950) ;;950,830
-  ;; 			:larm-trans-pos #f(650 300 1200) ;;1200,1130  y250
+  ;; (full-solve-ik-locate :rarm-trans-pos #f(650 -500 900) ;;950,830
+  ;; 			:larm-trans-pos #f(650 200 1150) ;;1200,1130  y250
   ;; 			:rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   ;; 			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
-  ;; 			:centroid 0.2)
+  ;; 			:centroid 0.2
+  ;; 			)
+  ;;pattern1
+  (send *robot* :torso :waist-p :joint-angle 20)
+  (full-solve-ik-locate :rarm-trans-pos #f(650 -400 950) ;;950,830
+  			:larm-trans-pos #f(650 300 1200) ;;1200,1130  y250
+  			:rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
+  			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
+  			:centroid 0.2)
   
   ;; (send *robot* :rarm :middle-r :joint-angle 60)  
   ;; (send *robot* :rarm :index-r1 :joint-angle 60)

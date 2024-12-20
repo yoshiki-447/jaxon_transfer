@@ -21,4 +21,5 @@ em /euslisp/auto-stabilizer-interface.l
 Serviceを編集したらsrcgen/ src/をrm -rfで消してcatkin clean auto_stabilizer
 catkin bt --no-deps
 
-Autostabilizer.cpp execAutoStabilizerでstd::cerr << gait.param.copOffset[0].value() <<std::endlでhrpsysにログが出る
+Autostabilizer.cpp execAutoStabilizerでstd::cerr << gaitParam.copOffset[0].value() <<std::endlでhrpsysにログが出る
+nameserverまで落としてstart-auto-balancerもする

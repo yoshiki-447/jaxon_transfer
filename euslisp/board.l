@@ -196,10 +196,14 @@
   ;;(send *robot* :reset-pose)
   (send *robot* :torso :waist-y :joint-angle -25)
   (send *robot* :torso :waist-p :joint-angle 25)
-  (full-solve-ik-locate :larm-trans-pos #f(650 -300 1100) :rarm-trans-pos #f(400 -650 825)
+  (full-solve-ik-locate :larm-trans-pos #f(700 -350 1050) :rarm-trans-pos #f(450 -700 775)
   			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0))
   			:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0))
   			:centroid 0.2)
+  ;; (full-solve-ik-locate :larm-trans-pos #f(650 -300 1100) :rarm-trans-pos #f(400 -650 825)
+  ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0))
+  ;; 			:larm-rpy (float-vector (deg2rad -35) (deg2rad 0) (deg2rad 0))
+  ;; 			:centroid 0.2) ;;右手左手手前
   ;; (full-solve-ik-locate :larm-trans-pos #f(700 -350 1000) :rarm-trans-pos #f(400 -650 725)
   ;; 			:rarm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
   ;; 			:larm-rpy (float-vector (deg2rad -35) (deg2rad 30) (deg2rad 0))
@@ -242,28 +246,14 @@
   ;; 		:centroid 0.2)
   ;; (send *robot* :rarm :wrist-p :joint-angle -40)
   ;; (send *robot* :larm :wrist-p :joint-angle 0)
-  ;; (prioritized-ik :relbow-trans-rpy (float-vector (deg2rad 30) (deg2rad 0) (deg2rad 0))
+  ;; (prioritized-ik :relbow-trans-pos #f(-50 -50 -50) :relbow-trans-rpy (float-vector (deg2rad 60) (deg2rad 0) (deg2rad 0))
   ;; 		  :lelbow-trans-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad -30)))
   (when run
-    (send *ri* :change-cop 0.0 -0.20 0.0 -0.20 5.0)
+    (send *ri* :change-cop 0.02 -0.20 0.02 -0.20 5.0)
     (send *ri* :wait-interpolation)
     (send *ri* :angle-vector (send *robot* :angle-vector) 10000)
     (send *ri* :wait-interpolation)
     )
-  )
-
-(defun impedance ()
-  (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
-	:K-p 500.0 :D-p 1000.0 :M-p 5)
-  (send *ri* :start-impedance :arms)
-  ;; (send *ri* :set-ref-forces
-  ;; 	(list
-  ;; 	 (float-vector 0 0 0) ;;rleg
-  ;; 	 (float-vector 0 0 0) ;;lleg
-  ;; 	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
-  ;; 	 (float-vector 0 0 0) ;;larm
-  ;; 	 )
-  ;; 	3000)
   )
 
 (defun all ()
@@ -319,7 +309,7 @@
   (setq *wrench-list* '())
   (setq myu 0.5)
   (setq grav 9.8)
-  (setq force_fit 30.0) ;;?
+  ;;(setq force_fit 30.0) ;;?
   (let* (;; (r-center2hand (float-vector (aref (send *robot* :rarm :end-coords :worldpos) 0) (aref (send *robot* :rarm :end-coords :worldpos) 1) 0.0))
 	 ;; (r-center (v- r-start-pos r-center2hand))
 	 (r-center (float-vector (aref (send *robot* :chest_link0_lk :worldpos) 0) (aref (send *robot* :chest_link0_lk :worldpos) 1) (aref (send *robot* :rarm :end-coords :worldpos) 2)))
@@ -448,7 +438,7 @@
     ;;   (push init-wr init-list-wr)
     ;;   )
     ;; (nreverse init-list-wr)
-    ;; (setq *wrench-list* (append init-list-wr *wrench-list*))
+    ;; (setq *wrench-list* (append init-list-wr *wrench-list*))  ;;this
     
     (setq trajectory '())
     (push l-trajectory trajectory) ;; elt trajectory 1
@@ -474,6 +464,9 @@
 
   ;; (progn (reset-pose :run nil) (lleg-foot :run nil) (lower-waist :run nil) (posture :run nil))
   ;; (setq init-angle (send *robot* :angle-vector))
+  ;; (when run
+  ;;   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
+  ;;   )
   (dotimes (i (length r_tra))
     ;;(arm-solve-ik-locate :rarm-trans-pos target :rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad r-angle)))
     (setq r_target (elt r_tra i))
@@ -532,13 +525,13 @@
   ;;   ;; (push init-angle *angle-list*)
   ;;   (push (car *angle-list*) *angle-list*)
   ;;   (push 2.0 *time-list*)
-  ;;   )
+  ;;   ) ;;this
 
-  (setq start-num 300)
+  (setq start-num 200)
   
   (when run
     ;; (send *ri* :angle-vector (car *angle-list*))
-    ;; (send *ri* :wait-interpolation)
+    ;; (send *ri* :wait-interpolation)  ;;this
     (format t "enter~%")
     (read-line)
     (send *ri* :start-log)
@@ -553,11 +546,10 @@
     	 )
     	5000)
     (send *ri* :wait-interpolation)
-    ;;(send *ri* :angle-vector-sequence-full *angle-list* *time-list* :wrench *wrench-list*)
+    ;; (send *ri* :angle-vector-sequence-full *angle-list* *time-list* :wrench *wrench-list*)  ;;this
     (send *ri* :angle-vector-sequence-full (nthcdr start-num *angle-list*) (nthcdr start-num *time-list*)
-	  :wrench (nthcdr start-num *wrench-list*))
-    ;;(send *ri* :change-cop -0.03 0.18 -0.03 0.18 12.0)
-    (send *ri* :change-cop -0.03 -0.10 -0.03 -0.10 12.0)
+    	  :wrench (nthcdr start-num *wrench-list*))
+    (send *ri* :change-cop 0.02 0.0 0.02 0.0 12.0)
     (send *ri* :wait-interpolation)
     )
   )
@@ -571,17 +563,17 @@
   ;; 					:num-points 5000 :mass 20.0))
   ;; (apply #'follow-circle (append args (list :r_tra (elt tra 0) :l_tra (elt tra 1))))
   (multiple-value-setq (r-tra l-tra) (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos)
-					:r-angle (deg2rad 0) :r-finish-angle (deg2rad 60) :r-height 0.0
+					:r-angle (deg2rad 0) :r-finish-angle (deg2rad 70) :r-height 0.0
 					:l-start-pos (send *robot* :larm :end-coords :worldpos)
-					:l-angle (deg2rad 0) :l-finish-angle (deg2rad 60) :l-height 0.0
-					:num-points 5000 :mass 20.0))
+					:l-angle (deg2rad 0) :l-finish-angle (deg2rad 70) :l-height 0.0
+					:num-points 5000 :mass 25.0))
   (apply #'follow-circle (append args (list :r_tra r-tra :l_tra l-tra)))
   )
 
 (defun impedance ()
   (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
-	:K-p 500.0 :D-p 1000.0 :M-p 5)  ;;default :K-p 500.0 :D-p 1000.0 :M-p 5
-  (send *ri* :start-impedance :arms)
+	:K-p 300.0 :D-p 1000.0 :M-p 5)  ;;default :K-p 500.0 :D-p 1000.0 :M-p 5
+  (send *ri* :start-impedance :larm)
   ;; (send *ri* :set-ref-forces
   ;; 	(list
   ;; 	 (float-vector 0 0 0) ;;rleg
