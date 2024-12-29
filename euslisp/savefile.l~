@@ -1,9 +1,0 @@
-(defun save-file (filename data)
-  (let ((file (open "~/ros/jaxon_transfer/data/filename" :direction :output)))
-    (when file
-      (format file "~A~%" data)
-      (close file)
-      )
-    )
-  )
-  

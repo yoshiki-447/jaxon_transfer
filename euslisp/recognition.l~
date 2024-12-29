@@ -1,7 +1,0 @@
-(ros::roseus "recognition")
-(ros::roseus-add-msgs "jsk_recognition_msgs")
-
-(ros::rate 20)
-(:callback (msg)
-	   (setq 
-(ros::subscribe "/edgetpu_human_pose_estimator/output/poses" jsk_recognition_msgs::PeoplePoseArray #'send self:callback 1)

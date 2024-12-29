@@ -100,3 +100,5 @@ y-or-n-p
 send *ri* :get-auto-stabilizer-param-arguments
 
 send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :data 
+
+89sk389sk3 11zen11zen
