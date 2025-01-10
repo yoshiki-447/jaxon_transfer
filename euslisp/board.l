@@ -70,33 +70,9 @@
   (send *ri* :set-auto-stabilizer-param :default-zmp-offsets '(#f(0.05 0.02) #f(0.05 -0.02)))
   )
 
-(defun zmp-stop ()
-  (send *ri* :stop-auto-balancer)
-  )
-
-(defun move-waist (&key(dz) (tm) (run t))
-       (send *robot* :fix-leg-to-coords (make-coords))
-       (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
-       (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
-       (when run
-	 (send *ri* :angle-vector (send *robot* :angle-vector) tm)
-	 (send *ri* :wait-interpolation)
-	 )
-       ;; (send *robot* :newcoords (make-coords))
-       (send *robot* :fix-leg-to-coords (make-coords))
-       )
-
-(defun upper-waist
-    (&key (dz -60) (tm 5000) (run t))
-  (move-waist :dz dz :tm tm :run run)
-  )
-
-(defun lower-waist
-    (&key (dz 60) (tm 5000) (run t))
-  (move-waist :dz dz :tm tm :run run) 
-  )
-
 (defun lleg-foot (&key (run t))
+  (send *robot* :reset-pose)
+  (send *robot* :fix-leg-to-coords (make-coords))
   (let ((target-lleg-coords1 (send
 			      (send
 			       (send *robot* :lleg :end-coords :copy-worldcoords)
@@ -144,8 +120,12 @@
 		       (make-coords :coords target-rleg-coords2 :name :rleg)
 		       )
 		 )
-	       (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-	       )
+	   (send *robot* :lleg :inverse-kinematics target-lleg-coords1)
+	   (send *robot* :lleg :inverse-kinematics target-lleg-coords2)
+	   (send *robot* :rleg :inverse-kinematics target-rleg-coords1)
+	   (send *robot* :rleg :inverse-kinematics target-rleg-coords2)
+	   ;;(send *robot* :angle-vector (send *ri* :state :potentio-vector))
+	   )
 	  (t (send *robot* :lleg :inverse-kinematics target-lleg-coords1)
 	     (send *robot* :lleg :inverse-kinematics target-lleg-coords2)
 	     (send *robot* :rleg :inverse-kinematics target-rleg-coords1)
@@ -153,9 +133,40 @@
 	     )
 	  )
 
-    (send *robot* :fix-leg-to-coords (make-coords))
+    ;; (send *robot* :fix-leg-to-coords (make-coords))
     (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
     )
+  )
+
+(defun fix-coords ()  ;;after lower-waist
+  (setq a (make-coords))
+  (send a :translate (float-vector (aref (send (send *robot* :foot-midcoords) :pos) 0) (aref (send (send *robot* :foot-midcoords) :pos) 1) 0))  ;;lower-waist z しても０にするため
+  (send a :rotate (deg2rad 45) :z) 
+  (send *robot* :fix-leg-to-coords a)
+  (format t "a: ~A~%" a)
+  )
+
+(defun move-waist (&key(dz) (tm) (run t))
+       ;; (send *robot* :fix-leg-to-coords (make-coords))
+       (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
+       (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
+       (when run
+	 (send *ri* :angle-vector (send *robot* :angle-vector) tm)
+	 (send *ri* :wait-interpolation)
+	 )
+       (fix-coords)
+       ;; (send *robot* :newcoords (make-coords))
+       ;; (send *robot* :fix-leg-to-coords (make-coords))
+       )
+
+(defun upper-waist
+    (&key (dz -60) (tm 5000) (run t))
+  (move-waist :dz dz :tm tm :run run)
+  )
+
+(defun lower-waist
+    (&key (dz 60) (tm 5000) (run t))
+  (move-waist :dz dz :tm tm :run run) 
   )
 
 (defun reset-pose (&key(run t))

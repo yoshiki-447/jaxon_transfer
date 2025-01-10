@@ -146,8 +146,8 @@
 
 (defun fix-coords ()  ;;after lower-waist
   (setq a (make-coords))
-  (send a :translate (float-vector (aref (send (send *robot* :foot-midcoords) :pos) 0) (aref (send (send *robot* :foot-midcoords) :pos) 1) 0))  ;;lower-waist no z ni kankeinai
-  (send a :rotate (deg2rad 15) :z)  ;;lleg-foot de 30 kaiten
+  (send a :translate (float-vector (aref (send (send *robot* :foot-midcoords) :pos) 0) (aref (send (send *robot* :foot-midcoords) :pos) 1) 0))  ;;lower-waist z しても０にするため
+  (send a :rotate (deg2rad 15) :z)  ;;lleg-foot で３０度回転
   (send *robot* :fix-leg-to-coords a)
   (format t "a: ~A~%" a)
   )
@@ -191,7 +191,7 @@
   ;; 			)
   (send *robot* :torso :waist-p :joint-angle 20)
   (full-solve-ik-locate :rarm-trans-pos #f(600 -400 750) 
-  			:larm-trans-pos #f(600 200 950)
+  			:larm-trans-pos #f(600 200 950)  ;y200
   			:rarm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:larm-rpy (float-vector (deg2rad 0) (deg2rad 0) (deg2rad 90))
   			:centroid 0.2
@@ -645,12 +645,12 @@
     )
   
   (when run
+    (send *ri* :start-log)
+    (unix::sleep 1)
     (send *ri* :angle-vector (car *angle-list*))
     (send *ri* :wait-interpolation)
     ;; (format t "enter~%")
     ;; (read-line)
-    (send *ri* :start-log)
-    (send *ri* :wait-interpolation)
     (send *ri* :angle-vector-sequence-full *angle-list* *time-list* :wrench *wrench-list*)
     (send *ri* :change-cop 0.0 0.1 0.0 0.1 12.0)  ;; default rleg_x 0.0 rleg_y 0.02 lleg_x 0.0 lleg_y -0.02 t 2.0
     
@@ -665,25 +665,27 @@
 (defun wake (&rest args)  
   ;; (apply #'follow-circle (generate-circle-trajectory (v+ #f(0 400 0) (send *robot* :rarm :end-coords :worldpos)) 400 10) args)
   (multiple-value-setq (r-tra l-tra) (generate-circle-trajectory :r-start-pos (send *robot* :rarm :end-coords :worldpos)
-								 :r-radius 400.0 :r-angle (deg2rad 0) :r-finish-angle (deg2rad 100)
+								 :r-radius 300.0 :r-angle (deg2rad 0) :r-finish-angle (deg2rad 100)
 								 :l-start-pos (send *robot* :larm :end-coords :worldpos)
 								 :l-radius 200.0 :l-angle (deg2rad 0) :l-finish-angle (deg2rad 90)
-								 :num-points 5000 :mass 15.0))
+								 :num-points 5000 :mass 25.0))
   (apply #'follow-circle (append args (list :r_tra r-tra :l_tra l-tra)))  ;;larm200or275
   )
 
 (defun impedance ()
-  (send *ri* :set-impedance-controller-param :arms :K-r 200.0 :D-r 300.0  :M-r 1
-	:K-p 500.0 :D-p 1000.0 :M-p 5)  ;;default :K-p 500.0 :D-p 1000.0 :M-p 5
-  (send *ri* :start-impedance :larm)
-  (send *ri* :set-ref-forces
-  	(list
-  	 (float-vector 0 0 0) ;;rleg
-  	 (float-vector 0 0 0) ;;lleg
-  	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
-  	 (float-vector 0 0 0) ;;larm
-  	 )
-  	3000)
+  (send *ri* :set-impedance-controller-param :larm :K-r 200.0 :D-r 300.0  :M-r 1
+	:K-p 300.0 :D-p 1000.0 :M-p 5)  ;;default :K-p 500.0 :D-p 1000.0 :M-p 5
+  (send *ri* :set-impedance-controller-param :rarm :K-r 200.0 :D-r 300.0  :M-r 1
+	:K-p 300.0 :D-p 1000.0 :M-p 5 :force-gain (list 0 0 1.0))
+  (send *ri* :start-impedance :arms)
+  ;; (send *ri* :set-ref-forces
+  ;; 	(list
+  ;; 	 (float-vector 0 0 0) ;;rleg
+  ;; 	 (float-vector 0 0 0) ;;lleg
+  ;; 	 (float-vector 0 0 0) ;;rarm (x, y, z) 単位はニュートン
+  ;; 	 (float-vector 0 0 0) ;;larm
+  ;; 	 )
+  ;; 	3000)
   )
 
 (defun angle-drawplot (&key (list *angle-list*) (num 14)) ;;torso-y 14 ;;rarm-wrist-p 24 ;;rarm-wrist-r 23 ;;rarm-wrist-y 22
