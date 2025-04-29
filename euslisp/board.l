@@ -1,4 +1,5 @@
 ;; (load "package://eus_prioritized_inverse_kinematics/euslisp/prioritized-inverse-kinematics-compiled.l")
+(require "models/arrow-object.l")
 
 (defun arm-solve-ik
     (&key(rarm-trans-pos #f(0 0 0))
@@ -133,7 +134,7 @@
 	     )
 	  )
 
-    ;; (send *robot* :fix-leg-to-coords (make-coords))
+    (send *robot* :fix-leg-to-coords (make-coords))
     (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
     )
   )
@@ -147,16 +148,16 @@
   )
 
 (defun move-waist (&key(dz) (tm) (run t))
-       ;; (send *robot* :fix-leg-to-coords (make-coords))
+       (send *robot* :fix-leg-to-coords (make-coords))
        (send *robot* :legs :move-end-pos (float-vector 0 0 dz))
        (send *robot* :move-centroid-on-foot :both '(:rleg :lleg))
        (when run
 	 (send *ri* :angle-vector (send *robot* :angle-vector) tm)
 	 (send *ri* :wait-interpolation)
 	 )
-       (fix-coords)
-       ;; (send *robot* :newcoords (make-coords))
-       ;; (send *robot* :fix-leg-to-coords (make-coords))
+       ;;(fix-coords)
+       (send *robot* :newcoords (make-coords))
+       (send *robot* :fix-leg-to-coords (make-coords))
        )
 
 (defun upper-waist
@@ -192,6 +193,25 @@
   (setq collar (float-vector (aref (send *robot* link-name :worldpos) 0) (aref (send *robot* link-name :worldpos) 1) (aref (send *robot* :rarm :end-coords :worldpos) 2)))
   (setq collar2end (v- (send *robot* :rarm :end-coords :worldpos) collar))
   (norm collar2end)
+  )
+
+(defun manequine (&key (rotate nil))
+  (send *human* :move-to (make-coords :pos #f(525 -375 900) :rpy (float-vector (deg2rad 150) (deg2rad 0) (deg2rad 0))))
+  (send *human* :rleg :crotch-p :joint-angle -60)
+  (send *human* :rleg :knee-p :joint-angle 60)
+  (send *human* :lleg :crotch-p :joint-angle -60)
+  (send *human* :lleg :knee-p :joint-angle 60)
+  (send *human* :rarm :elbow-p :joint-angle -120)
+  (send *human* :rarm :shoulder-p :joint-angle -20)
+  (send *human* :rarm :shoulder-y :joint-angle -60)
+  (send *human* :larm :elbow-p :joint-angle -120)
+  (send *human* :larm :shoulder-p :joint-angle -20)
+  (send *human* :larm :shoulder-y :joint-angle -60)
+  
+  (when rotate
+    (send *human* :move-to (make-coords :rpy (float-vector (deg2rad 70) 0 0)))
+    (send *human* :locate #f(500 350 900) :world)
+    )
   )
 
 (defun posture (&key(run t))
@@ -292,6 +312,7 @@
 (defvar *wrench-list* '())
 (defun generate-circle-trajectory (&key (r-start-pos) (r-angle) (r-finish-angle) (r-height) (l-start-pos) (l-angle) (l-finish-angle) (l-height) (num-points) (mass))
   (setq *wrench-list* '())
+  (setq cube-list '())
   (setq myu 0.5)
   (setq grav 9.8)
   ;;(setq force_fit 30.0) ;;?
@@ -442,6 +463,16 @@
 	     (push l-circle l-trajectory)
 	     )
 	    )
+      (when (= (mod i 100) 0)
+      (setq a (make-cube 20 20 20))
+      (send a :set-color :red) ;;rarm
+      (send a :translate r-circle)
+      (push a cube-list)
+      (setq b (make-cube 20 20 20))
+      (send b :set-color :blue) ;;larm
+      (send b :translate l-circle)
+      (push b cube-list)
+      )
       )
     (nreverse *r-theta-list*)
     (nreverse *l-theta-list*)
@@ -458,6 +489,11 @@
     ;;   )
     ;; (nreverse init-list-wr)
     ;; (setq *wrench-list* (append init-list-wr *wrench-list*))  ;;this
+    (setq coords (arrow))
+    (push coords cube-list)
+    (push *robot* cube-list)
+    (push *human* cube-list)
+    (objects cube-list)
     
     (setq trajectory '())
     (push l-trajectory trajectory) ;; elt trajectory 1

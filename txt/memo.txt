@@ -103,3 +103,5 @@ send (send (send *ri* :get-auto-stabilizer-param) :default_zmp_offsets) :data
 :impedance_force_gain #f(1.0 ga 12 ko)  rleg lleg rarm larm local x y z
 
 89sk389sk3 11zen11zen
+
+send *irtviewer* :change-background #f(1 1 1) 背景白

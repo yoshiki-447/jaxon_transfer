@@ -1,0 +1,7 @@
+(load "models/room602-wheelchair-object.l")
+(load "models/room602-bed-object.l")
+
+(setq *chair* (room602-wheelchair))
+(setq *bed* (room602-bed))
+
+(send *chair* :move-to (make-coords :pos :rpy))
